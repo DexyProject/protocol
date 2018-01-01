@@ -10,11 +10,12 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
 
     struct Order {
-        uint256 expires;
-        uint256 amountGive;
-        uint256 amountGet;
+        uint expires;
+        uint amountGive;
+        uint amountGet;
         address tokenGet;
         address tokenGive;
+        uint nonce;
     }
 
     mapping (bytes32 => bool) cancelled;
