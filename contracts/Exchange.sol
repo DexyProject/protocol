@@ -10,6 +10,7 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
 
     /// (token => user => balance)
+    mapping (bytes32 => bool) cancelled;
     mapping (address => mapping (address => uint)) balances;
 
     event Deposited(address indexed user, address token, uint amount);
