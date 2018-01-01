@@ -1,0 +1,32 @@
+{
+  "name": "contracts",
+  "version": "0.0.1",
+  "description": "Decentralized exchange contracts for DEXY",
+  "author": "DEXY",
+  "contributors": [
+    "Dean Eigenmann <dean@tokenate.io>"
+  ],
+  "license": "GPL-3.0",
+  "scripts": {
+    "test": "truffle test",
+    "lint": "solium --dir ./contracts"
+  },
+  "files": [
+    "contracts/",
+    "truffle.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DEXY/contracts.git"
+  },
+  "devDependencies": {
+    "solium": "^1.0.4",
+    "truffle": "^4.0.0",
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts"
+  ]
+}
