@@ -9,8 +9,17 @@ contract Exchange is Ownable, ExchangeInterface {
 
     using SafeMath for *;
 
-    /// (token => user => balance)
+    struct Order {
+        uint256 expires;
+        uint256 amountGive;
+        uint256 amountGet;
+        address tokenGet;
+        address tokenGive;
+    }
+
     mapping (bytes32 => bool) cancelled;
+
+    /// (token => user => balance)
     mapping (address => mapping (address => uint)) balances;
 
     event Deposited(address indexed user, address token, uint amount);
