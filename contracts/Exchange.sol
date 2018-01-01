@@ -54,6 +54,23 @@ contract Exchange is Ownable, ExchangeInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
+    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
+        Order memory order = Order({
+            expires: expires,
+            amountGive: amountGive,
+            amountGet: amountGet,
+            tokenGet: tokenGet,
+            tokenGive: tokenGive,
+            nonce: nonce
+        });
+
+        bytes32 hash = keccak256(order);
+
+        require(didSign(msg.sender, sha3("\x19Ethereum Signed Message:\n32", hash), v, r, s));
+
+        cancelled[hash] = true;
+    }
+
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
     }
