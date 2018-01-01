@@ -45,4 +45,8 @@ contract Exchange is Ownable, ExchangeInterface {
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
     }
+
+    function canTrade() public view returns (bool) {
+        return false;
+    }
 }
