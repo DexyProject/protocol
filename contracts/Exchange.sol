@@ -19,7 +19,8 @@ contract Exchange is Ownable, ExchangeInterface {
     function Exchange() public { }
 
     function deposit() external payable {
-
+        balances[0x0][msg.sender] = balances[0x0][msg.sender].add(msg.value);
+        Deposited(msg.sender, 0x0, amount);
     }
 
     function depositToken(address token, uint amount) external {
