@@ -20,7 +20,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function deposit() external payable {
         balances[0x0][msg.sender] = balances[0x0][msg.sender].add(msg.value);
-        Deposited(msg.sender, 0x0, amount);
+        Deposited(msg.sender, 0x0, msg.value);
     }
 
     function depositToken(address token, uint amount) external {
@@ -49,5 +49,9 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function canTrade() public view returns (bool) {
         return false;
+    }
+
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
+        return ecrecover(hash, v, r, s) == addr;
     }
 }
