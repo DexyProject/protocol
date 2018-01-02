@@ -21,7 +21,7 @@ contract Exchange is Ownable, ExchangeInterface {
     function Exchange() public { }
 
     function deposit(address token, uint amount) external payable {
-        require(token == 0x0 || msg.value = 0);
+        require(token == 0x0 || msg.value == 0);
 
         if (token != 0x0) {
             require(ERC20(token).transferFrom(msg.sender, address(this), amount));
