@@ -9,10 +9,11 @@ contract Exchange is Ownable, ExchangeInterface {
 
     using SafeMath for *;
 
-    mapping (bytes32 => bool) cancelled;
+    address constant ETH = 0x0;
 
     /// (token => (user => balance))
     mapping (address => mapping (address => uint)) balances;
+    mapping (bytes32 => bool) cancelled;
 
     event Deposited(address indexed user, address token, uint amount);
     event Withdrawn(address indexed user, address token, uint amount);
@@ -21,15 +22,15 @@ contract Exchange is Ownable, ExchangeInterface {
     function Exchange() public { }
 
     function deposit(address token, uint amount) external payable {
-        require(token == 0x0 || msg.value == 0);
+        require(token == ETH || msg.value == 0);
 
-        if (token == 0x0) {
+        if (token == ETH) {
             amount = msg.value;
         }
 
         balances[token][msg.sender] = balances[token][msg.sender].add(amount);
 
-        if (token != 0x0) {
+        if (token != ETH) {
             require(ERC20(token).transferFrom(msg.sender, address(this), amount));
         }
 
@@ -41,7 +42,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
 
-        if (token == 0x0) {
+        if (token == ETH) {
             msg.sender.transfer(amount);
         } else {
             ERC20(token).transfer(msg.sender, amount);
