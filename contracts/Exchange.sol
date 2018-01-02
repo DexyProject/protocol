@@ -9,18 +9,9 @@ contract Exchange is Ownable, ExchangeInterface {
 
     using SafeMath for *;
 
-    struct Order {
-        uint expires;
-        uint amountGive;
-        uint amountGet;
-        address tokenGet;
-        address tokenGive;
-        uint nonce;
-    }
-
     mapping (bytes32 => bool) cancelled;
 
-    /// (token => user => balance)
+    /// (token => (user => balance))
     mapping (address => mapping (address => uint)) balances;
 
     event Deposited(address indexed user, address token, uint amount);
@@ -55,18 +46,9 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-        Order memory order = Order({
-            expires: expires,
-            amountGive: amountGive,
-            amountGet: amountGet,
-            tokenGet: tokenGet,
-            tokenGive: tokenGive,
-            nonce: nonce
-        });
+        bytes32 hash = keccak256(expires, amountGive, amountGet, tokenGet, tokenGive, nonce);
 
-        bytes32 hash = keccak256(order);
-
-        require(didSign(msg.sender, sha3("\x19Ethereum Signed Message:\n32", hash), v, r, s));
+        require(didSign(msg.sender, hash, v, r, s));
 
         cancelled[hash] = true;
     }
@@ -80,6 +62,6 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return ecrecover(hash, v, r, s) == addr;
+        return ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
     }
 }
