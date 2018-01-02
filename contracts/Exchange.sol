@@ -20,13 +20,15 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function Exchange() public { }
 
-    function deposit() external payable {
-        balances[0x0][msg.sender] = balances[0x0][msg.sender].add(msg.value);
-        Deposited(msg.sender, 0x0, msg.value);
-    }
+    function deposit(address token, uint amount) external payable {
+        require(token == 0x0 || msg.value = 0);
 
-    function depositToken(address token, uint amount) external {
-        require(ERC20(token).transferFrom(msg.sender, address(this), amount));
+        if (token != 0x0) {
+            require(ERC20(token).transferFrom(msg.sender, address(this), amount));
+        } else {
+            amount = msg.value;
+        }
+
         balances[token][msg.sender] = balances[token][msg.sender].add(amount);
         Deposited(msg.sender, token, amount);
     }
