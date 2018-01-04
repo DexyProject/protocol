@@ -49,7 +49,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(expires, amountGive, amountGet, tokenGet, tokenGive, nonce);
+        bytes32 hash = keccak256(msg.sender, expires, amountGive, amountGet, tokenGet, tokenGive, nonce);
         require(didSign(msg.sender, hash, v, r, s));
 
         cancelled[hash] = true;
