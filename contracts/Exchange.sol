@@ -25,17 +25,18 @@ contract Exchange is Ownable, ExchangeInterface {
     function deposit(address token, uint amount) external payable {
         require(token == ETH || msg.value == 0);
 
+        uint value = amount;
         if (token == ETH) {
-            amount = msg.value;
+            value = msg.value;
         }
 
-        balances[token][msg.sender] = balances[token][msg.sender].add(amount);
+        balances[token][msg.sender] = balances[token][msg.sender].add(value);
 
         if (token != ETH) {
-            require(ERC20(token).transferFrom(msg.sender, address(this), amount));
+            require(ERC20(token).transferFrom(msg.sender, address(this), value));
         }
 
-        Deposited(msg.sender, token, amount);
+        Deposited(msg.sender, token, value);
     }
 
     function withdraw(address token, uint amount) external {
@@ -69,6 +70,6 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
     }
 }
