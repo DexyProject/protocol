@@ -15,11 +15,6 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (address => mapping (address => uint)) balances;
     mapping (bytes32 => bool) cancelled;
 
-    event Deposited(address indexed user, address token, uint amount);
-    event Withdrawn(address indexed user, address token, uint amount);
-    event Cancelled(address indexed user, uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s);
-    event Traded();
-
     function Exchange() public { }
 
     function deposit(address token, uint amount) external payable {
@@ -57,7 +52,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(didSign(msg.sender, hash, v, r, s));
 
         cancelled[hash] = true;
-        Cancelled(msg.sender, expires, amountGive, amountGet, tokenGet, tokenGive, nonce, v, r, s);
+        Cancelled(hash);
     }
 
     function balanceOf(address token, address user) public view returns (uint) {
