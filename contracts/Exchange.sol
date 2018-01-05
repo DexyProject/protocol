@@ -52,12 +52,12 @@ contract Exchange is Ownable, ExchangeInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
-	function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
+    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user));
 
-		performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount);
-		Traded(hash, amount);
-	}
+        performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount);
+        Traded(hash, amount);
+    }
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
         bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, this);
