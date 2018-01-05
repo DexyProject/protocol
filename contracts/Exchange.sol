@@ -58,7 +58,12 @@ contract Exchange is Ownable, ExchangeInterface {
 
 		bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
 
-		if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) != user) revert();
+		if (
+			!didSign(msg.sender, hash, v, r, s)
+			|| now >= expires
+			|| fills[user][hash].add(amount) >= amountGet
+		   )
+			revert();
 
 		performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount);
 		fills[user][hash] = fills[user][hash].add(amount);
