@@ -53,9 +53,10 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
-        require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user));
+        bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+        require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
 
-        performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount);
+        performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
         Traded(hash, amount);
     }
 
@@ -71,8 +72,7 @@ contract Exchange is Ownable, ExchangeInterface {
         return balances[token][user];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public view returns (bool) {
-        bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
 
         if (!didSign(user, hash, v, r, s)) {
              return false;
@@ -82,9 +82,19 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // @todo check volume
+        require(getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) >= amount);
 
         return expires >= now && fills[user][hash].add(amount) >= amountGet;
+    }
+
+    function getVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns (uint) {
+        bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+
+        uint availableTaker = amountGet.sub(fills[user][hash]);
+        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
+
+        if (availableTaker < availableMaker) return availableTaker;
+        else return availableMaker;
     }
 
     function setFees(uint _makerFee, uint _takerFee) onlyOwner public {
@@ -96,7 +106,7 @@ contract Exchange is Ownable, ExchangeInterface {
         feeAccount = _feeAccount;
     }
 
-    function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) internal {
+    function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
         uint tradeMakerFee = amount.mul(makerFee).div(1 ether);
 
