@@ -95,8 +95,8 @@ contract Exchange is Ownable, ExchangeInterface {
         uint availableTaker = amountGet.sub(fills[user][hash]);
         uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
 
-        if (availableTaker < availableMaker) return availableTaker;
-        else return availableMaker;
+
+		return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
     function setFees(uint _makerFee, uint _takerFee) onlyOwner public {
