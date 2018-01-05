@@ -53,8 +53,6 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
 	function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
-		bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
-
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user));
 
 		performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount);
@@ -74,9 +72,15 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) public view returns (bool) {
-         if (!didSign(user, hash, v, r, s)) {
+        bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+
+        if (!didSign(user, hash, v, r, s)) {
              return false;
-         }
+        }
+
+        if (cancelled[hash]) {
+            return false;
+        }
 
         // @todo check volume
 
