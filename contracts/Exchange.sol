@@ -82,6 +82,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
+        require(balances[tokenGet][msg.sender] >= amount);
         require(getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) >= amount);
 
         return expires >= now && fills[user][hash].add(amount) >= amountGet;
