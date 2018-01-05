@@ -11,12 +11,12 @@ contract Exchange is Ownable, ExchangeInterface {
 
     address constant ETH = 0x0;
 
-	uint makerFee = 0;
-	uint takerFee = 0;
-	address feeAccount;
+    uint makerFee = 0;
+    uint takerFee = 0;
+    address feeAccount;
 
     mapping (address => mapping (address => uint)) balances;
-	mapping (address => mapping (bytes32 => uint)) fills;
+    mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
     function Exchange() public { }
