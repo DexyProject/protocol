@@ -60,7 +60,7 @@ contract Exchange is Ownable, ExchangeInterface {
 	}
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-		bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, this);
+        bytes32 hash = sha256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, this);
         require(didSign(msg.sender, hash, v, r, s));
 
         cancelled[hash] = true;
@@ -87,14 +87,14 @@ contract Exchange is Ownable, ExchangeInterface {
         return expires >= now && fills[user][hash].add(amount) >= amountGet;
     }
 
-	function setFees(uint _makerFee, uint _takerFee) onlyOwner public {
-		makerFee = _makerFee;
-		takerFee = _takerFee;
-	}
+    function setFees(uint _makerFee, uint _takerFee) onlyOwner public {
+        makerFee = _makerFee;
+        takerFee = _takerFee;
+    }
 
-	function setFeeAccount(address _feeAccount) onlyOwner public {
-		feeAccount = _feeAccount;
-	}
+    function setFeeAccount(address _feeAccount) onlyOwner public {
+        feeAccount = _feeAccount;
+    }
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) internal {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
