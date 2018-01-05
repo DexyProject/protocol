@@ -95,7 +95,6 @@ contract Exchange is Ownable, ExchangeInterface {
         uint availableTaker = amountGet.sub(fills[user][hash]);
         uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
 
-
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
