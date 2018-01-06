@@ -36,6 +36,7 @@ solium --dir ./contracts
 ## Authors
 
 * **Dean Eigenmann** - [decanus](https://github.com/decanus)
+* **Matthew Di Ferrante** - [mattdf](https://github.com/mattdf)
 
 See also the list of [contributors](https://github.com/decanus/DEXY/contributors) who participated in this project.
 
