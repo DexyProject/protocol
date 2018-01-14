@@ -98,12 +98,12 @@ contract Exchange is Ownable, ExchangeInterface {
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
-    function setFees(uint _makerFee, uint _takerFee) onlyOwner public {
+    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
         makerFee = _makerFee;
         takerFee = _takerFee;
     }
 
-    function setFeeAccount(address _feeAccount) onlyOwner public {
+    function setFeeAccount(address _feeAccount) public onlyOwner {
         feeAccount = _feeAccount;
     }
 
