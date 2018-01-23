@@ -25,6 +25,7 @@ contract Exchange is Ownable, ExchangeInterface {
     function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
         require(msg.sender != user);
         bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+        require(balances[tokenGet][msg.sender] >= amount);
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
 
         performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
