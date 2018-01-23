@@ -39,18 +39,28 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
+        makerFee = _makerFee;
+        takerFee = _takerFee;
+    }
+
+    function setFeeAccount(address _feeAccount) public onlyOwner {
+        feeAccount = _feeAccount;
+    }
+
     function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
 
         if (!didSign(user, hash, v, r, s)) {
-             return false;
+            return false;
         }
 
         if (cancelled[hash]) {
             return false;
         }
 
-        require(balances[tokenGet][msg.sender] >= amount);
-        require(getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) >= amount);
+        if (getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) < amount) {
+            return false;
+        }
 
         return expires >= now && fills[user][hash].add(amount) >= amountGet;
     }
@@ -59,18 +69,9 @@ contract Exchange is Ownable, ExchangeInterface {
         bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
 
         uint availableTaker = amountGet.sub(fills[user][hash]);
-        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
+        uint availableMaker = vault.balanceOf(tokenGive, user).mul(amountGet).div(amountGive);
 
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
-    }
-
-    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
-        makerFee = _makerFee;
-        takerFee = _takerFee;
-    }
-
-    function setFeeAccount(address _feeAccount) public onlyOwner {
-        feeAccount = _feeAccount;
     }
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
