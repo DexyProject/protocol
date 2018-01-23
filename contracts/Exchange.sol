@@ -69,6 +69,16 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
+        makerFee = _makerFee;
+        takerFee = _takerFee;
+    }
+
+    function setFeeAccount(address _feeAccount) public onlyOwner {
+        feeAccount = _feeAccount;
+    }
+
+
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
     }
@@ -83,8 +93,13 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        require(balances[tokenGet][msg.sender] >= amount);
-        require(getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) >= amount);
+        if (balances[tokenGet][msg.sender] < amount) {
+            return false;
+        }
+
+        if (getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) < amount) {
+            return false;
+        }
 
         return expires >= now && fills[user][hash].add(amount) >= amountGet;
     }
@@ -96,15 +111,6 @@ contract Exchange is Ownable, ExchangeInterface {
         uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
 
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
-    }
-
-    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
-        makerFee = _makerFee;
-        takerFee = _takerFee;
-    }
-
-    function setFeeAccount(address _feeAccount) public onlyOwner {
-        feeAccount = _feeAccount;
     }
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
