@@ -51,10 +51,8 @@ contract Vault is Ownable, VaultInterface {
     }
 
     function transfer(address token, address from, address to, uint amount) external onlyExchange {
-
-        balances[token][from] = balances[token][from].sub(amount.add(tradeTakerFee));
-        balances[token][to] = balances[token][to].add(amount.sub(tradeMakerFee));
-
+        balances[token][from] = balances[token][from].sub(amount);
+        balances[token][to] = balances[token][to].add(amount);
     }
 
     function balanceOf(address token, address user) public view returns (uint) {

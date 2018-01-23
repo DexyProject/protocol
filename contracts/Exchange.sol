@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
 import "./SafeMath.sol";
+import "./Vault/VaultInterface.sol";
 import "./Ownership/Ownable.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
@@ -9,6 +10,8 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
 
     address constant ETH = 0x0;
+
+    VaultInterface public vault;
 
     uint makerFee = 0;
     uint takerFee = 0;
@@ -74,11 +77,12 @@ contract Exchange is Ownable, ExchangeInterface {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
         uint tradeMakerFee = amount.mul(makerFee).div(1 ether);
 
-        balances[tokenGet][msg.sender] = balances[tokenGet][msg.sender].sub(amount.add(tradeTakerFee));
-        balances[tokenGet][user] = balances[tokenGet][user].add(amount.sub(tradeMakerFee));
-        balances[tokenGet][feeAccount] = balances[tokenGet][feeAccount].add(amount.add(tradeTakerFee).add(tradeMakerFee));
-        balances[tokenGive][user] = balances[tokenGive][user].sub(amountGive.mul(amount).div(amountGet));
-        balances[tokenGive][msg.sender] = balances[tokenGive][msg.sender].add(amountGive.mul(amount).div(amountGet));
+        vault.transfer(tokenGet, msg.sender, user, amount);
+        vault.transfer(tokenGive, user, msg.sender, amountGive.mul(amount).div(amountGet));
+
+        vault.transfer(tokenGet, msg.sender, feeAccount, tradeTakerFee);
+        vault.transfer(tokenGet, user, feeAccount, tradeTakerFee); // @todo remove maker fee
+
         fills[user][hash] = fills[user][hash].add(amount);
     }
 
