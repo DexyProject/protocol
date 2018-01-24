@@ -84,6 +84,10 @@ contract Exchange is Ownable, ExchangeInterface {
         return balances[token][user];
     }
 
+    function filled(address user, bytes32 hash) public view returns (uint) {
+        return fills[user][hash];
+    }
+
     function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
 
         if (!didSign(user, hash, v, r, s)) {
