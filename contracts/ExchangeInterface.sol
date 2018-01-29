@@ -5,7 +5,7 @@ interface ExchangeInterface {
     event Deposited(address indexed user, address token, uint amount);
     event Withdrawn(address indexed user, address token, uint amount);
     event Cancelled(bytes32 indexed hash);
-    event Traded(bytes32 indexed hash, uint amount);
+    event Traded(bytes32 indexed hash, uint amountGive, uint amountGet);
 
     function deposit(address token, uint amount) external payable;
     function withdraw(address token, uint amount) external;
