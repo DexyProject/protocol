@@ -11,7 +11,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     address constant ETH = 0x0;
 
-    bytes32 public constant hashScheme = keccak256(
+    bytes32 public constant HASH_SCHEME = keccak256(
         "address Token Get",
         "uint Amount Get",
         "address Token Give",
@@ -139,7 +139,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function orderHash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (uint32) {
         return keccak256(
-            hashScheme,
+            HASH_SCHEME,
             keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this)
         );
     }
