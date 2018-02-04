@@ -137,7 +137,7 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[user][hash] = fills[user][hash].add(amount);
     }
 
-    function orderHash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (uint32) {
+    function orderHash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (bytes32) {
         return keccak256(
             HASH_SCHEME,
             keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this)
