@@ -65,7 +65,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
         require(msg.sender != user);
-        bytes32 hash = hash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
         require(balances[tokenGet][msg.sender] >= amount);
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
 
@@ -74,7 +74,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = hash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
         require(didSign(msg.sender, hash, v, r, s));
 
         cancelled[hash] = true;
@@ -117,7 +117,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function getVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns (uint) {
-        bytes32 hash = hash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
 
         uint availableTaker = amountGet.sub(fills[user][hash]);
         uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
@@ -137,7 +137,7 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[user][hash] = fills[user][hash].add(amount);
     }
 
-    function hash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (uint32) {
+    function orderHash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (uint32) {
         return keccak256(
             hashScheme,
             keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this)
