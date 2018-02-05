@@ -70,7 +70,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
 
         performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
-        Traded(hash, amount);
+        Traded(hash, amount, amountGive.mul(amount).div(amountGet));
     }
 
     function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s, bool prefixed) external {
