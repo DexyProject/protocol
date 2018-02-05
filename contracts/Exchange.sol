@@ -79,7 +79,6 @@ contract Exchange is Ownable, ExchangeInterface {
         feeAccount = _feeAccount;
     }
 
-
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
     }
