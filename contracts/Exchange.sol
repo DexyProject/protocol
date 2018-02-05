@@ -73,9 +73,9 @@ contract Exchange is Ownable, ExchangeInterface {
         Traded(hash, amount);
     }
 
-    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
+    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s, bool prefixed) external {
         bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
-        require(didSign(msg.sender, hash, v, r, s));
+        require(didSign(msg.sender, hash, v, r, s, prefixed));
 
         cancelled[hash] = true;
         Cancelled(hash);
@@ -99,9 +99,9 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[user][hash];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
+    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash, bool prefixed) public view returns (bool) {
 
-        if (!didSign(user, hash, v, r, s)) {
+        if (!didSign(user, hash, v, r, s, prefixed)) {
             return false;
         }
 
@@ -144,7 +144,11 @@ contract Exchange is Ownable, ExchangeInterface {
         );
     }
 
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, bool prefixed) internal pure returns (bool) {
+        if (prefixed) {
+            hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
+        }
+
+        return ecrecover(hash, v, r, s) == addr;
     }
 }
