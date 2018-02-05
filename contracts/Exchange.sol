@@ -11,6 +11,17 @@ contract Exchange is Ownable, ExchangeInterface {
 
     address constant ETH = 0x0;
 
+    bytes32 public constant HASH_SCHEME = keccak256(
+        "address Token Get",
+        "uint Amount Get",
+        "address Token Give",
+        "uint Amount Give",
+        "uint Expires",
+        "uint Nonce",
+        "address User",
+        "address Exchange"
+    );
+
     uint makerFee = 0;
     uint takerFee = 0;
     address feeAccount;
@@ -54,7 +65,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
         require(msg.sender != user);
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
         require(balances[tokenGet][msg.sender] >= amount);
         require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
 
@@ -62,9 +73,9 @@ contract Exchange is Ownable, ExchangeInterface {
         Traded(hash, amount, amountGive.mul(amount).div(amountGet));
     }
 
-    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, this);
-        require(didSign(msg.sender, hash, v, r, s));
+    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s, bool prefixed) external {
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+        require(didSign(msg.sender, hash, v, r, s, prefixed));
 
         cancelled[hash] = true;
         Cancelled(hash);
@@ -87,9 +98,9 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[user][hash];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
+    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash, bool prefixed) public view returns (bool) {
 
-        if (!didSign(user, hash, v, r, s)) {
+        if (!didSign(user, hash, v, r, s, prefixed)) {
             return false;
         }
 
@@ -105,7 +116,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function getVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns (uint) {
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
+        bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
 
         uint availableTaker = amountGet.sub(fills[user][hash]);
         uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
@@ -125,7 +136,19 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[user][hash] = fills[user][hash].add(amount);
     }
 
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+    function orderHash(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) internal view returns (bytes32) {
+        return keccak256(
+            HASH_SCHEME,
+            keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this)
+        );
+    }
+
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, bool prefixed) internal pure returns (bool) {
+        bytes32 message = hash;
+        if (prefixed) {
+            message = keccak256("\x19Ethereum Signed Message:\n32", hash);
+        }
+
+        return ecrecover(message, v, r, s) == addr;
     }
 }
