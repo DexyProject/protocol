@@ -145,10 +145,11 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, bool prefixed) internal pure returns (bool) {
+        bytes32 message = hash;
         if (prefixed) {
-            hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
+            message = keccak256("\x19Ethereum Signed Message:\n32", hash);
         }
 
-        return ecrecover(hash, v, r, s) == addr;
+        return ecrecover(message, v, r, s) == addr;
     }
 }
