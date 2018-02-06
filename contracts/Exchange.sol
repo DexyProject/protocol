@@ -65,11 +65,11 @@ contract Exchange is Ownable, ExchangeInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
-    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint mode, uint amount) external {
+    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) external {
         require(msg.sender != user);
         bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
         require(balances[tokenGet][msg.sender] >= amount);
-        require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash, mode));
+        require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, mode, hash));
 
         performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
         Traded(hash, amount, amountGive.mul(amount).div(amountGet));
@@ -100,7 +100,7 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[user][hash];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash, uint mode) public view returns (bool) {
+    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode, bytes32 hash) public view returns (bool) {
 
         if (!didSign(user, hash, v, r, s, SigMode(mode))) {
             return false;
@@ -146,13 +146,12 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) internal pure returns (bool) {
-        bytes32 message = hash;
         if (mode == SigMode.GETH) {
-            message = keccak256("\x19Ethereum Signed Message:\n32", hash);
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
         } else if (mode == SigMode.TREZOR) {
-            message = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
         }
 
-        return ecrecover(message, v, r, s) == addr;
+        return ecrecover(hash, v, r, s) == addr;
     }
 }
