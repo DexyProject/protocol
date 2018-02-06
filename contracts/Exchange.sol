@@ -65,7 +65,7 @@ contract Exchange is Ownable, ExchangeInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
-    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, SigMode mode, uint amount) external {
+    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint mode, uint amount) external {
         require(msg.sender != user);
         bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user);
         require(balances[tokenGet][msg.sender] >= amount);
@@ -75,9 +75,9 @@ contract Exchange is Ownable, ExchangeInterface {
         Traded(hash, amount, amountGive.mul(amount).div(amountGet));
     }
 
-    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s, SigMode mode) external {
+    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s, uint mode) external {
         bytes32 hash = orderHash(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
-        require(didSign(msg.sender, hash, v, r, s, mode));
+        require(didSign(msg.sender, hash, v, r, s, SigMode(mode)));
 
         cancelled[hash] = true;
         Cancelled(hash);
@@ -100,9 +100,9 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[user][hash];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash, SigMode mode) public view returns (bool) {
+    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash, uint mode) public view returns (bool) {
 
-        if (!didSign(user, hash, v, r, s, mode)) {
+        if (!didSign(user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
