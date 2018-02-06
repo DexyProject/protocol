@@ -32,6 +32,10 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function Exchange() public { }
 
+    function () payable {
+        revert();
+    }
+
     function deposit(address token, uint amount) external payable {
         require(token == ETH || msg.value == 0);
 
