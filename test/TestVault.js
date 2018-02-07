@@ -1,4 +1,4 @@
-const Vault = artifacts.require('Vault.sol');
+const Vault = artifacts.require('vault/Vault.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
 
 contract('Vault', function (accounts) {

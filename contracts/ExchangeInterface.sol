@@ -2,8 +2,6 @@ pragma solidity ^0.4.18;
 
 interface ExchangeInterface {
 
-    event Deposited(address indexed user, address token, uint amount);
-    event Withdrawn(address indexed user, address token, uint amount);
     event Cancelled(bytes32 indexed hash);
     event Traded(bytes32 indexed hash, uint amountGive, uint amountGet);
 
