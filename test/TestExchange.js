@@ -1,7 +1,7 @@
 const Exchange = artifacts.require('Exchange.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
 
-contract('Organization', function (accounts) {
+contract('Exchange', function (accounts) {
 
     let exchange, token;
 
