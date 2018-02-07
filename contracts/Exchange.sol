@@ -103,7 +103,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(balances[order.tokenGet][msg.sender] >= amount);
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
-        performTrade(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.user, amount, hash);
+        performTrade(order, amount, hash);
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -197,16 +197,16 @@ contract Exchange is Ownable, ExchangeInterface {
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
-    function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
+    function performTrade(Order order, uint amount, bytes32 hash) internal {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
         uint tradeMakerFee = amount.mul(makerFee).div(1 ether);
 
-        balances[tokenGet][msg.sender] = balances[tokenGet][msg.sender].sub(amount.add(tradeTakerFee));
-        balances[tokenGet][user] = balances[tokenGet][user].add(amount.sub(tradeMakerFee));
-        balances[tokenGet][feeAccount] = balances[tokenGet][feeAccount].add(amount.add(tradeTakerFee).add(tradeMakerFee));
-        balances[tokenGive][user] = balances[tokenGive][user].sub(amountGive.mul(amount).div(amountGet));
-        balances[tokenGive][msg.sender] = balances[tokenGive][msg.sender].add(amountGive.mul(amount).div(amountGet));
-        fills[user][hash] = fills[user][hash].add(amount);
+        balances[order.tokenGet][msg.sender] = balances[order.tokenGet][msg.sender].sub(amount.add(tradeTakerFee));
+        balances[order.tokenGet][order.user] = balances[order.tokenGet][order.user].add(amount.sub(tradeMakerFee));
+        balances[order.tokenGet][feeAccount] = balances[order.tokenGet][feeAccount].add(amount.add(tradeTakerFee).add(tradeMakerFee));
+        balances[order.tokenGive][order.user] = balances[order.tokenGive][order.user].sub(order.amountGive.mul(amount).div(order.amountGet));
+        balances[order.tokenGive][msg.sender] = balances[order.tokenGive][msg.sender].add(order.amountGive.mul(amount).div(order.amountGet));
+        fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
     function orderHash(Order order) internal view returns (bytes32) {
