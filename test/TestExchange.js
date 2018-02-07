@@ -24,5 +24,4 @@ contract('Organization', function (accounts) {
         });
 
     });
-
 });
