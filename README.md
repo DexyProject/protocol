@@ -38,11 +38,11 @@ solium --dir ./contracts
 * **Dean Eigenmann** - [decanus](https://github.com/decanus)
 * **Matthew Di Ferrante** - [mattdf](https://github.com/mattdf)
 
-See also the list of [contributors](https://github.com/decanus/DEXY/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/DexyProject/contracts/contributors) who participated in this project.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/decanus/DEXY/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/DexyProject/contracts/tags).
 
 ## License
 
