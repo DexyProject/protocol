@@ -170,7 +170,7 @@ contract Exchange is Ownable, ExchangeInterface {
         vault.transfer(tokenGive, user, msg.sender, amountGive.mul(amount).div(amountGet));
 
         vault.transfer(tokenGet, msg.sender, feeAccount, tradeTakerFee);
-        vault.transfer(tokenGet, user, feeAccount, tradeTakerFee); // @todo remove maker fee
+        vault.transfer(tokenGet, user, feeAccount, tradeTakerFee);
 
         fills[user][hash] = fills[user][hash].add(amount);
     }
