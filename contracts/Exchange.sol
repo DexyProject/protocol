@@ -73,7 +73,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(vault.balanceOf(order.tokenGet,msg.sender) >= amount);
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
-        performTrade(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.user, amount, hash);
+        performTrade(order, amount, hash);
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -163,16 +163,18 @@ contract Exchange is Ownable, ExchangeInterface {
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
-    function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
+    // @todo move this function into vault contract. Potentially move sig functions there too, could make checking if
+    // a given exchange can trade a lot easier.
+    function performTrade(Order order, uint amount, bytes32 hash) internal {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
         amount = amount.sub(tradeTakerFee); // @todo check if ok
 
-        vault.transfer(tokenGet, msg.sender, feeAccount, tradeTakerFee);
+        vault.transfer(order.tokenGet, msg.sender, feeAccount, tradeTakerFee);
 
-        vault.transfer(tokenGet, msg.sender, user, amount);
-        vault.transfer(tokenGive, user, msg.sender, amountGive.mul(amount).div(amountGet));
+        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
+        vault.transfer(order.tokenGive, order.user, msg.sender, order.amountGive.mul(amount).div(order.amountGet));
 
-        fills[user][hash] = fills[user][hash].add(amount);
+        fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
     function orderHash(Order order) internal view returns (bytes32) {
