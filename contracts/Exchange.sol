@@ -194,7 +194,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        return order.expires >= now && fills[order.user][hash].add(amount) <= order.amountGet;
+        return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
