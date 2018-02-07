@@ -9,7 +9,30 @@ contract Exchange is Ownable, ExchangeInterface {
 
     using SafeMath for *;
 
-    address constant ETH = 0x0;
+    enum SigMode {TYPED_SIG_EIP, GETH, TREZOR}
+
+    struct Order {
+        address user;
+        address tokenGive;
+        address tokenGet;
+        uint amountGive;
+        uint amountGet;
+        uint expires;
+        uint nonce;
+    }
+
+    address constant public ETH = 0x0;
+
+    bytes32 constant public HASH_SCHEME = keccak256(
+        "address Token Get",
+        "uint Amount Get",
+        "address Token Give",
+        "uint Amount Give",
+        "uint Expires",
+        "uint Nonce",
+        "address User",
+        "address Exchange"
+    );
 
     uint makerFee = 0;
     uint takerFee = 0;
@@ -20,6 +43,10 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (bytes32 => bool) cancelled;
 
     function Exchange() public { }
+
+    function () payable {
+        revert();
+    }
 
     function deposit(address token, uint amount) external payable {
         require(token == ETH || msg.value == 0);
@@ -52,19 +79,55 @@ contract Exchange is Ownable, ExchangeInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
-    function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) external {
-        require(msg.sender != user);
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
-        require(balances[tokenGet][msg.sender] >= amount);
-        require(canTrade(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s, amount, hash));
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @param amount Amount of the order to be filled.
+    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    function trade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) external {
+        Order memory order = Order({
+            user: addresses[0],
+            tokenGive: addresses[1],
+            tokenGet: addresses[2],
+            amountGive: values[0],
+            amountGet: values[1],
+            expires: values[2],
+            nonce: values[3]
+        });
 
-        performTrade(tokenGet, amountGet, tokenGive, amountGive, user, amount, hash);
-        Traded(hash, amount);
+        require(msg.sender != order.user);
+        bytes32 hash = orderHash(order);
+
+        require(balances[order.tokenGet][msg.sender] >= amount);
+        require(canTradeInternal(order, v, r, s, amount, mode, hash));
+
+        performTrade(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.user, amount, hash);
     }
 
-    function cancel(uint expires, uint amountGive, uint amountGet, address tokenGet, address tokenGive, uint nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, this);
-        require(didSign(msg.sender, hash, v, r, s));
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    function cancel(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint mode) external {
+        Order memory order = Order({
+            user: addresses[0],
+            tokenGive: addresses[1],
+            tokenGet: addresses[2],
+            amountGive: values[0],
+            amountGet: values[1],
+            expires: values[2],
+            nonce: values[3]
+        });
+
+        require(msg.sender != order.user);
+        require(order.amountGive > 0 && order.amountGet > 0);
+
+        bytes32 hash = orderHash(order);
+        require(didSign(msg.sender, hash, v, r, s, SigMode(mode)));
 
         cancelled[hash] = true;
         Cancelled(hash);
@@ -79,7 +142,6 @@ contract Exchange is Ownable, ExchangeInterface {
         feeAccount = _feeAccount;
     }
 
-
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
     }
@@ -88,9 +150,39 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[user][hash];
     }
 
-    function canTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, bytes32 hash) public view returns (bool) {
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @param amount Amount of the order to be filled.
+    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    /// @return Boolean if order can be traded
+    function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) public view returns (bool) {
+        Order memory order = Order({
+            user: addresses[0],
+            tokenGive: addresses[1],
+            tokenGet: addresses[2],
+            amountGive: values[0],
+            amountGet: values[1],
+            expires: values[2],
+            nonce: values[3]
+        });
 
-        if (!didSign(user, hash, v, r, s)) {
+        bytes32 hash = orderHash(order);
+
+        return canTradeInternal(order, v, r, s, amount, mode, hash);
+    }
+
+    function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
+        uint availableTaker = amountGet.sub(fills[user][hash]);
+        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
+
+        return (availableTaker < availableMaker) ? availableTaker : availableMaker;
+    }
+
+    function canTradeInternal(Order order, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode, bytes32 hash) internal view returns (bool) {
+        if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
@@ -98,20 +190,11 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (getVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user) < amount) {
+        if (getVolume(order.amountGet, order.tokenGive, order.amountGive, order.user, hash) < amount) {
             return false;
         }
 
-        return expires >= now && fills[user][hash].add(amount) >= amountGet;
-    }
-
-    function getVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user) public view returns (uint) {
-        bytes32 hash = keccak256(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, this);
-
-        uint availableTaker = amountGet.sub(fills[user][hash]);
-        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
-
-        return (availableTaker < availableMaker) ? availableTaker : availableMaker;
+        return order.expires >= now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
@@ -126,7 +209,20 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[user][hash] = fills[user][hash].add(amount);
     }
 
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+    function orderHash(Order order) internal view returns (bytes32) {
+        return keccak256(
+            HASH_SCHEME,
+            keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
+        );
+    }
+
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) internal pure returns (bool) {
+        if (mode == SigMode.GETH) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+        } else if (mode == SigMode.TREZOR) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
+        }
+
+        return ecrecover(hash, v, r, s) == addr;
     }
 }
