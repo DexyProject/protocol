@@ -165,7 +165,6 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function performTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount, bytes32 hash) internal {
         uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
-        uint tradeMakerFee = amount.mul(makerFee).div(1 ether);
 
         vault.transfer(tokenGet, msg.sender, user, amount);
         vault.transfer(tokenGive, user, msg.sender, amountGive.mul(amount).div(amountGet));
