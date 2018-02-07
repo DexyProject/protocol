@@ -21,8 +21,6 @@ contract Exchange is Ownable, ExchangeInterface {
         uint nonce;
     }
 
-    address constant public ETH = 0x0;
-
     bytes32 constant public HASH_SCHEME = keccak256(
         "address Token Get",
         "uint Amount Get",
@@ -51,37 +49,6 @@ contract Exchange is Ownable, ExchangeInterface {
         revert();
     }
 
-    function deposit(address token, uint amount) external payable {
-        require(token == ETH || msg.value == 0);
-
-        uint value = amount;
-        if (token == ETH) {
-            value = msg.value;
-        }
-
-        balances[token][msg.sender] = balances[token][msg.sender].add(value);
-
-        if (token != ETH) {
-            require(ERC20(token).transferFrom(msg.sender, address(this), value));
-        }
-
-        Deposited(msg.sender, token, value);
-    }
-
-    function withdraw(address token, uint amount) external {
-        require(balanceOf(token, msg.sender) >= amount);
-
-        balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
-
-        if (token == ETH) {
-            msg.sender.transfer(amount);
-        } else {
-            ERC20(token).transfer(msg.sender, amount);
-        }
-
-        Withdrawn(msg.sender, token, amount);
-    }
-
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param v ECDSA signature parameter v.
@@ -103,7 +70,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = orderHash(order);
 
-        require(balances[order.tokenGet][msg.sender] >= amount);
+        require(vault.balanceOf(order.tokenGet,msg.sender) >= amount);
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.user, amount, hash);
@@ -145,10 +112,6 @@ contract Exchange is Ownable, ExchangeInterface {
         feeAccount = _feeAccount;
     }
 
-    function balanceOf(address token, address user) public view returns (uint) {
-        return balances[token][user];
-    }
-
     function filled(address user, bytes32 hash) public view returns (uint) {
         return fills[user][hash];
     }
@@ -179,7 +142,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
         uint availableTaker = amountGet.sub(fills[user][hash]);
-        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
+        uint availableMaker = vault.balanceOf(tokenGive, user).mul(amountGet).div(amountGive);
 
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }

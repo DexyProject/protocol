@@ -1,13 +1,15 @@
 pragma solidity ^0.4.18;
 
 import "./VaultInterface.sol";
-import "./Tokens/ERC20.sol";
+import "../Tokens/ERC20.sol";
 import "../Ownership/Ownable.sol";
 import "../SafeMath.sol";
 
 contract Vault is Ownable, VaultInterface {
 
     using SafeMath for *;
+
+    address constant public ETH = 0x0;
 
     address previousExchange;
     address exchange;
