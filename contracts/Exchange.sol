@@ -44,7 +44,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function Exchange() public { }
 
-    function () payable {
+    function () public payable {
         revert();
     }
 
