@@ -166,13 +166,13 @@ contract Exchange is Ownable, ExchangeInterface {
     // @todo move this function into vault contract. Potentially move sig functions there too, could make checking if
     // a given exchange can trade a lot easier.
     function performTrade(Order order, uint amount, bytes32 hash) internal {
-        uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
-        amount = amount.sub(tradeTakerFee); // @todo check if ok
+        uint give = order.amountGive.mul(amount).div(order.amountGet);
+        uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
-        vault.transfer(order.tokenGet, msg.sender, feeAccount, tradeTakerFee);
+        vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
 
         vault.transfer(order.tokenGet, msg.sender, order.user, amount);
-        vault.transfer(order.tokenGive, order.user, msg.sender, order.amountGive.mul(amount).div(order.amountGet));
+        vault.transfer(order.tokenGive, order.user, msg.sender, give);
 
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
