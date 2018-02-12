@@ -34,7 +34,6 @@ contract Exchange is Ownable, ExchangeInterface {
         "address Exchange"
     );
 
-    uint makerFee = 0;
     uint takerFee = 0;
     address feeAccount;
 
@@ -42,7 +41,11 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
-    function Exchange() public { }
+    function Exchange(uint _takerFee, address _feeAccount) public {
+        require(_feeAccount != 0x0);
+        takerFee = _takerFee;
+        feeAccount = _feeAccount;
+    }
 
     function () public payable {
         revert();
@@ -143,12 +146,12 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
-    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
-        makerFee = _makerFee;
+    function setFees(uint _takerFee) public onlyOwner {
         takerFee = _takerFee;
     }
 
     function setFeeAccount(address _feeAccount) public onlyOwner {
+        require(_feeAccount != 0x0);
         feeAccount = _feeAccount;
     }
 
@@ -218,14 +221,18 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function performTrade(Order order, uint amount, bytes32 hash) internal {
-        uint tradeTakerFee = amount.mul(takerFee).div(1 ether);
-        uint tradeMakerFee = amount.mul(makerFee).div(1 ether);
+        uint give = order.amountGive.mul(amount).div(order.amountGet);
+        uint fee = give.mul(takerFee).div(1 ether);
 
-        balances[order.tokenGet][msg.sender] = balances[order.tokenGet][msg.sender].sub(amount.add(tradeTakerFee));
-        balances[order.tokenGet][order.user] = balances[order.tokenGet][order.user].add(amount.sub(tradeMakerFee));
-        balances[order.tokenGet][feeAccount] = balances[order.tokenGet][feeAccount].add(amount.add(tradeTakerFee).add(tradeMakerFee));
-        balances[order.tokenGive][order.user] = balances[order.tokenGive][order.user].sub(order.amountGive.mul(amount).div(order.amountGet));
-        balances[order.tokenGive][msg.sender] = balances[order.tokenGive][msg.sender].add(order.amountGive.mul(amount).div(order.amountGet));
+        // @todo consider fee bias
+
+        balances[order.tokenGive][order.user] = balances[order.tokenGive][order.user].sub(give);
+        balances[order.tokenGet][msg.sender] = balances[order.tokenGet][msg.sender].sub(amount);
+        balances[order.tokenGet][order.user] = balances[order.tokenGet][order.user].add(amount);
+
+        balances[order.tokenGive][feeAccount] = balances[order.tokenGive][feeAccount].add(fee);
+        balances[order.tokenGive][msg.sender] = balances[order.tokenGive][msg.sender].add(give.sub(fee));
+
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 

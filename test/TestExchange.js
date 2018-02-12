@@ -7,7 +7,7 @@ contract('Exchange', function (accounts) {
 
     beforeEach(async () => {
         token = await MockToken.new();
-        exchange = await Exchange.new();
+        exchange = await Exchange.new(0, accounts[0]);
     });
 
     context('funds', async () => {
