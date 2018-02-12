@@ -104,6 +104,16 @@ contract Exchange is Ownable, ExchangeInterface {
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order, amount, hash);
+
+        Traded(
+            hash,
+            order.tokenGive,
+            amountGive * amount / amountGet,
+            order.tokenGet,
+            amount,
+            order.user,
+            msg.sender
+        );
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
