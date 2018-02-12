@@ -107,6 +107,16 @@ contract Exchange is Ownable, ExchangeInterface {
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order, amount, hash);
+
+        Traded(
+            hash,
+            order.tokenGive,
+            amountGive * amount / amountGet,
+            order.tokenGet,
+            amount,
+            order.user,
+            msg.sender
+        );
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -184,6 +194,16 @@ contract Exchange is Ownable, ExchangeInterface {
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) public pure returns (bool) {
+        if (mode == SigMode.GETH) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+        } else if (mode == SigMode.TREZOR) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
+        }
+
+        return ecrecover(hash, v, r, s) == addr;
+    }
+
     function canTradeInternal(Order order, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode, bytes32 hash) internal view returns (bool) {
         if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
@@ -221,15 +241,5 @@ contract Exchange is Ownable, ExchangeInterface {
             HASH_SCHEME,
             keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
         );
-    }
-
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) internal pure returns (bool) {
-        if (mode == SigMode.GETH) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
-        } else if (mode == SigMode.TREZOR) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
-        }
-
-        return ecrecover(hash, v, r, s) == addr;
     }
 }
