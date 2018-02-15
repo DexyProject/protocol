@@ -111,7 +111,7 @@ contract Exchange is Ownable, ExchangeInterface {
         Traded(
             hash,
             order.tokenGive,
-            amountGive * amount / amountGet,
+            order.amountGive * amount / order.amountGet,
             order.tokenGet,
             amount,
             order.user,
