@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 interface ExchangeInterface {
 
     event Cancelled(bytes32 indexed hash);
-    event Traded(bytes32 indexed hash, uint amountGive, uint amountGet);
+    event Traded(bytes32 indexed hash, address tokenGive, uint amountGive, address tokenGet, uint amountGet, address maker, address taker);
 
     function deposit(address token, uint amount) external payable;
     function withdraw(address token, uint amount) external;

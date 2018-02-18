@@ -34,14 +34,16 @@ contract Exchange is Ownable, ExchangeInterface {
 
     VaultInterface public vault;
 
-    uint makerFee = 0;
     uint takerFee = 0;
     address feeAccount;
 
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
-    function Exchange(VaultInterface _vault) public {
+    function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
+        require(_feeAccount != 0x0);
+        takerFee = _takerFee;
+        feeAccount = _feeAccount;
         vault = _vault;
     }
 
@@ -74,6 +76,16 @@ contract Exchange is Ownable, ExchangeInterface {
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order, amount, hash);
+
+        Traded(
+            hash,
+            order.tokenGive,
+            order.amountGive * amount / order.amountGet,
+            order.tokenGet,
+            amount,
+            order.user,
+            msg.sender
+        );
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -103,12 +115,12 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
-    function setFees(uint _makerFee, uint _takerFee) public onlyOwner {
-        makerFee = _makerFee;
+    function setFees(uint _takerFee) public onlyOwner {
         takerFee = _takerFee;
     }
 
     function setFeeAccount(address _feeAccount) public onlyOwner {
+        require(_feeAccount != 0x0);
         feeAccount = _feeAccount;
     }
 
@@ -147,6 +159,16 @@ contract Exchange is Ownable, ExchangeInterface {
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
+    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) public pure returns (bool) {
+        if (mode == SigMode.GETH) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+        } else if (mode == SigMode.TREZOR) {
+            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
+        }
+
+        return ecrecover(hash, v, r, s) == addr;
+    }
+
     function canTradeInternal(Order order, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode, bytes32 hash) internal view returns (bool) {
         if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
@@ -169,6 +191,8 @@ contract Exchange is Ownable, ExchangeInterface {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
+        // @todo consider fee bias
+
         vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
 
         vault.transfer(order.tokenGet, msg.sender, order.user, amount);
@@ -182,15 +206,5 @@ contract Exchange is Ownable, ExchangeInterface {
             HASH_SCHEME,
             keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
         );
-    }
-
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) internal pure returns (bool) {
-        if (mode == SigMode.GETH) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
-        } else if (mode == SigMode.TREZOR) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
-        }
-
-        return ecrecover(hash, v, r, s) == addr;
     }
 }
