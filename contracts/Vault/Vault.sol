@@ -11,13 +11,12 @@ contract Vault is Ownable, VaultInterface {
 
     address constant public ETH = 0x0;
 
-    address previousExchange;
     address exchange;
 
     mapping (address => mapping (address => uint)) balances;
 
     modifier onlyExchange {
-        require(previousExchange == 0x0 || msg.sender == exchange);
+        require(msg.sender == exchange);
         _;
     }
 
@@ -59,7 +58,6 @@ contract Vault is Ownable, VaultInterface {
 
     function setExchange(address _exchange) public onlyOwner {
         require(_exchange != 0x0);
-        previousExchange = exchange;
         exchange = _exchange;
     }
 
