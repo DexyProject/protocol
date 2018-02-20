@@ -13,10 +13,12 @@ contract Vault is Ownable, VaultInterface {
 
     address exchange;
 
+    // user => exchange => approved
+    mapping (address => mapping (address => bool)) approved;
     mapping (address => mapping (address => uint)) balances;
 
-    modifier onlyExchange {
-        require(msg.sender == exchange);
+    modifier onlyApproved(address user) {
+        require(msg.sender == exchange && approved[user][exchange]);
         _;
     }
 
@@ -51,7 +53,20 @@ contract Vault is Ownable, VaultInterface {
         Withdrawn(msg.sender, token, amount);
     }
 
-    function transfer(address token, address from, address to, uint amount) external onlyExchange {
+    function approve(address _exchange) external {
+        require(exchange == _exchange);
+        approved[msg.sender][exchange] = true;
+    }
+
+    function unapprove(address exchange) external {
+        approved[msg.sender][exchange] = false;
+    }
+
+    function isApproved(address user, address exchange) external view returns (bool) {
+        return approved[user][exchange];
+    }
+
+    function transfer(address token, address from, address to, uint amount) external onlyApproved(from) {
         balances[token][from] = balances[token][from].sub(amount);
         balances[token][to] = balances[token][to].add(amount);
     }
