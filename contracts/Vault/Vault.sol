@@ -17,7 +17,7 @@ contract Vault is Ownable, VaultInterface {
     mapping (address => mapping (address => uint)) balances;
 
     modifier onlyExchange {
-        require(msg.sender == exchange);
+        require(previousExchange == 0x0 || msg.sender == exchange);
         _;
     }
 
@@ -55,6 +55,12 @@ contract Vault is Ownable, VaultInterface {
     function transfer(address token, address from, address to, uint amount) external onlyExchange {
         balances[token][from] = balances[token][from].sub(amount);
         balances[token][to] = balances[token][to].add(amount);
+    }
+
+    function setExchange(address _exchange) public onlyOwner {
+        require(_exchange != 0x0);
+        previousExchange = exchange;
+        exchange = _exchange;
     }
 
     function balanceOf(address token, address user) public view returns (uint) {
