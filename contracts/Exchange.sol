@@ -136,7 +136,7 @@ contract Exchange is Ownable, ExchangeInterface {
             nonce: values[3]
         });
 
-        require(msg.sender != order.user);
+        require(msg.sender == order.user);
         require(order.amountGive > 0 && order.amountGet > 0);
 
         bytes32 hash = orderHash(order);
