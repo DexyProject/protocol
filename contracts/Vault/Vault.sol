@@ -71,6 +71,11 @@ contract Vault is Ownable, VaultInterface {
         balances[token][to] = balances[token][to].add(amount);
     }
 
+    function tokenFallback(address from, uint value, bytes data) public {
+        balances[msg.sender][from] = balances[msg.sender][from].add(value);
+        Deposited(from, msg.sender, value);
+    }
+
     function setExchange(address _exchange) public onlyOwner {
         require(_exchange != 0x0);
         exchange = _exchange;
