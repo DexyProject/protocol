@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
 import "./SafeMath.sol";
-import "./Tokens/ERC20.sol";
+import "./Vault/VaultInterface.sol";
 import "./Ownership/Ownable.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
@@ -21,8 +21,6 @@ contract Exchange is Ownable, ExchangeInterface {
         uint nonce;
     }
 
-    address constant public ETH = 0x0;
-
     bytes32 constant public HASH_SCHEME = keccak256(
         "address Token Get",
         "uint Amount Get",
@@ -34,52 +32,23 @@ contract Exchange is Ownable, ExchangeInterface {
         "address Exchange"
     );
 
+    VaultInterface public vault;
+
     uint takerFee = 0;
     address feeAccount;
 
-    mapping (address => mapping (address => uint)) balances;
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
-    function Exchange(uint _takerFee, address _feeAccount) public {
+    function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(_feeAccount != 0x0);
         takerFee = _takerFee;
         feeAccount = _feeAccount;
+        vault = _vault;
     }
 
     function () public payable {
         revert();
-    }
-
-    function deposit(address token, uint amount) external payable {
-        require(token == ETH || msg.value == 0);
-
-        uint value = amount;
-        if (token == ETH) {
-            value = msg.value;
-        }
-
-        balances[token][msg.sender] = balances[token][msg.sender].add(value);
-
-        if (token != ETH) {
-            require(ERC20(token).transferFrom(msg.sender, address(this), value));
-        }
-
-        Deposited(msg.sender, token, value);
-    }
-
-    function withdraw(address token, uint amount) external {
-        require(balanceOf(token, msg.sender) >= amount);
-
-        balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
-
-        if (token == ETH) {
-            msg.sender.transfer(amount);
-        } else {
-            ERC20(token).transfer(msg.sender, amount);
-        }
-
-        Withdrawn(msg.sender, token, amount);
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -103,7 +72,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = orderHash(order);
 
-        require(balances[order.tokenGet][msg.sender] >= amount);
+        require(vault.balanceOf(order.tokenGet,msg.sender) >= amount);
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order, amount, hash);
@@ -155,10 +124,6 @@ contract Exchange is Ownable, ExchangeInterface {
         feeAccount = _feeAccount;
     }
 
-    function balanceOf(address token, address user) public view returns (uint) {
-        return balances[token][user];
-    }
-
     function filled(address user, bytes32 hash) public view returns (uint) {
         return fills[user][hash];
     }
@@ -189,7 +154,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
         uint availableTaker = amountGet.sub(fills[user][hash]);
-        uint availableMaker = balances[tokenGive][user].mul(amountGet).div(amountGive);
+        uint availableMaker = vault.balanceOf(tokenGive, user).mul(amountGet).div(amountGive);
 
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
@@ -220,18 +185,18 @@ contract Exchange is Ownable, ExchangeInterface {
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
+    // @todo move this function into vault contract. Potentially move sig functions there too, could make checking if
+    // a given exchange can trade a lot easier.
     function performTrade(Order order, uint amount, bytes32 hash) internal {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
-        uint fee = give.mul(takerFee).div(1 ether);
+        uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         // @todo consider fee bias
 
-        balances[order.tokenGive][order.user] = balances[order.tokenGive][order.user].sub(give);
-        balances[order.tokenGet][msg.sender] = balances[order.tokenGet][msg.sender].sub(amount);
-        balances[order.tokenGet][order.user] = balances[order.tokenGet][order.user].add(amount);
+        vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
 
-        balances[order.tokenGive][feeAccount] = balances[order.tokenGive][feeAccount].add(fee);
-        balances[order.tokenGive][msg.sender] = balances[order.tokenGive][msg.sender].add(give.sub(fee));
+        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
+        vault.transfer(order.tokenGive, order.user, msg.sender, give);
 
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
