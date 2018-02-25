@@ -16,6 +16,7 @@ contract Vault is Ownable, VaultInterface {
     // user => exchange => approved
     mapping (address => mapping (address => bool)) approved;
     mapping (address => mapping (address => uint)) balances;
+    mapping (address => uint) accounted;
 
     modifier onlyApproved(address user) {
         require(msg.sender == exchange && approved[user][exchange]);
@@ -31,6 +32,7 @@ contract Vault is Ownable, VaultInterface {
         }
 
         balances[token][msg.sender] = balances[token][msg.sender].add(value);
+        accounted[token] = accounted[token].add(amount);
 
         if (token != ETH) {
             require(ERC20(token).transferFrom(msg.sender, address(this), value));
@@ -43,6 +45,7 @@ contract Vault is Ownable, VaultInterface {
         require(balanceOf(token, msg.sender) >= amount);
 
         balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
+        accounted[token] = accounted[token].sub(amount);
 
         if (token == ETH) {
             msg.sender.transfer(amount);
