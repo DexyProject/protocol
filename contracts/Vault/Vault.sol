@@ -62,13 +62,13 @@ contract Vault is Ownable, VaultInterface {
         approved[msg.sender][exchange] = false;
     }
 
-    function isApproved(address user, address exchange) external view returns (bool) {
-        return approved[user][exchange];
-    }
-
     function transfer(address token, address from, address to, uint amount) external onlyApproved(from) {
         balances[token][from] = balances[token][from].sub(amount);
         balances[token][to] = balances[token][to].add(amount);
+    }
+
+    function isApproved(address user, address exchange) external view returns (bool) {
+        return approved[user][exchange];
     }
 
     function tokenFallback(address from, uint value, bytes data) public {
