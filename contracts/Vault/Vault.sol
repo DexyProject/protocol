@@ -11,7 +11,7 @@ contract Vault is Ownable, VaultInterface {
 
     address constant public ETH = 0x0;
 
-    address exchange;
+    address public exchange;
 
     // user => exchange => approved
     mapping (address => mapping (address => bool)) approved;
