@@ -79,6 +79,15 @@ contract Vault is Ownable, VaultInterface {
         Deposited(from, msg.sender, value);
     }
 
+    function withdrawOverflow(address token) public onlyOwner {
+        if (token == ETH) {
+            msg.sender.transfer(overflow(token));
+            return;
+        }
+
+        ERC20(token).transfer(msg.sender, overflow(token));
+    }
+
     function setExchange(address _exchange) public onlyOwner {
         require(_exchange != 0x0);
         exchange = _exchange;
@@ -86,6 +95,14 @@ contract Vault is Ownable, VaultInterface {
 
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
+    }
+
+    function overflow(address token) internal view returns (uint) {
+        if (token == ETH) {
+            return this.balance.sub(accounted[token]);
+        }
+
+        return ERC20(token).balanceOf(this).sub(accounted[token]);
     }
 
 }
