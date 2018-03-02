@@ -109,6 +109,8 @@ contract Exchange is Ownable, ExchangeInterface {
         require(order.amountGive > 0 && order.amountGet > 0);
 
         bytes32 hash = orderHash(order);
+        require(fills[oder.user][hash] < order.amountGet);
+        require(!cancelled[hash]);
         require(didSign(msg.sender, hash, v, r, s, SigMode(mode)));
 
         cancelled[hash] = true;
