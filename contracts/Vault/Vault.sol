@@ -30,11 +30,11 @@ contract Vault is Ownable, VaultInterface {
             value = msg.value;
         }
 
-        balances[token][msg.sender] = balances[token][msg.sender].add(value);
-
         if (token != ETH) {
             require(ERC20(token).transferFrom(msg.sender, address(this), value));
         }
+        
+        balances[token][msg.sender] = balances[token][msg.sender].add(value);
 
         Deposited(msg.sender, token, value);
     }
