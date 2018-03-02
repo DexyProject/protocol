@@ -33,10 +33,8 @@ contract Vault is Ownable, VaultInterface {
         if (token != ETH) {
             require(ERC20(token).transferFrom(msg.sender, address(this), value));
         }
-        
-        balances[token][msg.sender] = balances[token][msg.sender].add(value);
 
-        Deposited(msg.sender, token, value);
+        depositFor(msg.sender, token, value);
     }
 
     function withdraw(address token, uint amount) external {
@@ -72,8 +70,7 @@ contract Vault is Ownable, VaultInterface {
     }
 
     function tokenFallback(address from, uint value, bytes data) public {
-        balances[msg.sender][from] = balances[msg.sender][from].add(value);
-        Deposited(from, msg.sender, value);
+        depositFor(from, msg.sender, value);
     }
 
     function setExchange(address _exchange) public onlyOwner {
@@ -85,4 +82,8 @@ contract Vault is Ownable, VaultInterface {
         return balances[token][user];
     }
 
+    function depositFor(address user, address token, uint amount) private {
+        balances[token][user] = balances[token][user].add(amount);
+        Deposited(user, token, amount);
+    }
 }
