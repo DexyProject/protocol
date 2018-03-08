@@ -49,4 +49,16 @@ contract('Vault', function (accounts) {
             assert.equal(await vault.balanceOf.call(0x0, accounts[0]), 0);
         });
     });
+
+    context('ERC777', async () => {
+
+        it('should allow setting and unsetting of ERC777 token', async () => {
+            await vault.setERC777(token.address, {from: accounts[0]});
+            assert.equal(await vault.isERC777(token.address), true);
+
+            await vault.unsetERC777(token.address, {from: accounts[0]});
+            assert.equal(await vault.isERC777(token.address), false);
+        })
+
+    })
 });
