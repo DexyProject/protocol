@@ -90,6 +90,14 @@ contract Vault is Ownable, VaultInterface {
         Deposited(from, msg.sender, amount);
     }
 
+    function setERC777(address token) public onlyOwner {
+        isERC777[token] = true;
+    }
+
+    function unsetERC777(address token) public onlyOwner {
+        isERC777[token] = false;
+    }
+
     function setExchange(address _exchange) public onlyOwner {
         require(_exchange != 0x0);
         exchange = _exchange;
