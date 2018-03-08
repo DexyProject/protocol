@@ -83,8 +83,7 @@ contract Vault is Ownable, VaultInterface {
             isERC777[msg.sender] = true;
         }
 
-        balances[msg.sender][from] = balances[msg.sender][from].add(amount);
-        Deposited(from, msg.sender, amount);
+        depositFor(from, msg.sender, amount);
     }
 
     function setERC777(address token) public onlyOwner {
