@@ -82,7 +82,7 @@ contract Vault is Ownable, VaultInterface {
     }
 
     function tokensReceived(address operator, address from, address to, uint amount, bytes userData, bytes operatorData) public {
-        if (isERC777) {
+        if (!isERC777[msg.sender]) {
             isERC777[msg.sender] = true;
         }
 
