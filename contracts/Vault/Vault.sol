@@ -18,7 +18,7 @@ contract Vault is Ownable, VaultInterface {
     mapping (address => mapping (address => bool)) approved;
     mapping (address => mapping (address => uint)) balances;
 
-    mapping (address => bool) isERC777;
+    mapping (address => bool) public isERC777;
 
     modifier onlyApproved(address user) {
         require(msg.sender == exchange && approved[user][exchange]);
