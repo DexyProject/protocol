@@ -34,8 +34,8 @@ contract Exchange is Ownable, ExchangeInterface {
 
     VaultInterface public vault;
 
-    uint takerFee = 0;
-    address feeAccount;
+    uint public takerFee = 0;
+    address public feeAccount;
 
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
