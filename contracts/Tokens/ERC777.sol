@@ -1,3 +1,5 @@
+pragma solidity ^0.4.18;
+
 interface ERC777 {
     function name() public constant returns (string);
     function symbol() public constant returns (string);
