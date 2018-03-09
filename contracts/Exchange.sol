@@ -184,6 +184,10 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
+        if (!vault.isApproved(order.user, this)) {
+            return false;
+        }
+
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
