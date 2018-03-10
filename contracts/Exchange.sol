@@ -90,11 +90,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function cancel(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint mode) external {
+    function cancel(address[3] addresses, uint[4] values) external {
         Order memory order = Order({
             user: addresses[0],
             tokenGive: addresses[1],
@@ -111,7 +107,6 @@ contract Exchange is Ownable, ExchangeInterface {
         bytes32 hash = orderHash(order);
         require(fills[order.user][hash] < order.amountGet);
         require(!cancelled[hash]);
-        require(didSign(msg.sender, hash, v, r, s, SigMode(mode)));
 
         cancelled[hash] = true;
         Cancelled(hash);
