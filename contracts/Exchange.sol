@@ -33,6 +33,8 @@ contract Exchange is Ownable, ExchangeInterface {
         "address Exchange"
     );
 
+    uint256 constant public MAX_FEE = 5000000000000000; // 0.5%
+
     VaultInterface public vault;
 
     uint public takerFee = 0;
@@ -43,6 +45,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(_feeAccount != 0x0);
+        require(_takerFee <= MAX_FEE);
         takerFee = _takerFee;
         feeAccount = _feeAccount;
         vault = _vault;
@@ -114,6 +117,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function setFees(uint _takerFee) public onlyOwner {
+        require(_takerFee <= MAX_FEE);
         takerFee = _takerFee;
     }
 
@@ -203,7 +207,7 @@ contract Exchange is Ownable, ExchangeInterface {
         vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
 
         vault.transfer(order.tokenGet, msg.sender, order.user, amount);
-        vault.transfer(order.tokenGive, order.user, msg.sender, give);
+        vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
 
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
