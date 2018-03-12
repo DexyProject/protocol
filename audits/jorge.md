@@ -90,7 +90,8 @@ to migrate to the new version executing a trade.
 Vault effectively approving a new version.
 - This would allow to upgrade and start trading in just one transaction.
 
-##### Wash trading 'protection' can give fake security to users - https://github.com/DexyProject/contracts/blob/4a0197fe327a002b45b3081241aaac86f1abcbff/contracts/Exchange.sol#L73
+##### Wash trading 'protection' can give false security to users
+- https://github.com/DexyProject/contracts/blob/4a0197fe327a002b45b3081241aaac86f1abcbff/contracts/Exchange.sol#L73
 
 - It checks whether a user is not trading with themselves.
 - Given that there is no sybil protection a user can create another account and
@@ -128,7 +129,7 @@ execute the trade.
 instance.
 
 #### Praise
-- Great use of [ERC721 `eth_signTypedData`](https://github.com/ethereum/EIPs/pull/712) 🔏
+- Great use of [ERC712 `eth_signTypedData`](https://github.com/ethereum/EIPs/pull/712) 🔏
 - [ERC777 token](https://github.com/ethereum/EIPs/issues/777) support for deposits 🤩
 - Great balance between convenience and security in the upgradeabily approach to
 such a critical contract. 🕵️‍♀️
