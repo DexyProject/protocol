@@ -103,7 +103,7 @@ contract Vault is Ownable, VaultInterface {
         }
 
         if (isERC777[token]) {
-            ERC777(token).send(msg.sender, amount);
+            ERC777(token).send(msg.sender, overflow(token));
             return;
         }
 
