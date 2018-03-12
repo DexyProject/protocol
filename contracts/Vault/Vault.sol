@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./VaultInterface.sol";
 import "../Tokens/ERC20.sol";
+import "../Tokens/ERC777.sol";
 import "../Ownership/Ownable.sol";
 import "../SafeMath.sol";
 
@@ -16,6 +17,8 @@ contract Vault is Ownable, VaultInterface {
     // user => exchange => approved
     mapping (address => mapping (address => bool)) approved;
     mapping (address => mapping (address => uint)) balances;
+
+    mapping (address => bool) public isERC777;
 
     modifier onlyApproved(address user) {
         require(msg.sender == exchange && approved[user][exchange]);
@@ -44,6 +47,8 @@ contract Vault is Ownable, VaultInterface {
 
         if (token == ETH) {
             msg.sender.transfer(amount);
+        } else if (isERC777[token]) {
+            ERC777(token).send(msg.sender, amount);
         } else {
             ERC20(token).transfer(msg.sender, amount);
         }
@@ -71,6 +76,22 @@ contract Vault is Ownable, VaultInterface {
 
     function tokenFallback(address from, uint value, bytes data) public {
         depositFor(from, msg.sender, value);
+    }
+
+    function tokensReceived(address operator, address from, address to, uint amount, bytes userData, bytes operatorData) public {
+        if (!isERC777[msg.sender]) {
+            isERC777[msg.sender] = true;
+        }
+
+        depositFor(from, msg.sender, amount);
+    }
+
+    function setERC777(address token) public onlyOwner {
+        isERC777[token] = true;
+    }
+
+    function unsetERC777(address token) public onlyOwner {
+        isERC777[token] = false;
     }
 
     function setExchange(address _exchange) public onlyOwner {
