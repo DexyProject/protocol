@@ -34,8 +34,8 @@ contract Exchange is Ownable, ExchangeInterface {
 
     VaultInterface public vault;
 
-    uint takerFee = 0;
-    address feeAccount;
+    uint public takerFee = 0;
+    address public feeAccount;
 
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
@@ -90,11 +90,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function cancel(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint mode) external {
+    function cancel(address[3] addresses, uint[4] values) external {
         Order memory order = Order({
             user: addresses[0],
             tokenGive: addresses[1],
@@ -111,7 +107,6 @@ contract Exchange is Ownable, ExchangeInterface {
         bytes32 hash = orderHash(order);
         require(fills[order.user][hash] < order.amountGet);
         require(!cancelled[hash]);
-        require(didSign(msg.sender, hash, v, r, s, SigMode(mode)));
 
         cancelled[hash] = true;
         Cancelled(hash);
@@ -184,16 +179,16 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
+        if (!vault.isApproved(order.user, this)) {
+            return false;
+        }
+
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
-    // @todo move this function into vault contract. Potentially move sig functions there too, could make checking if
-    // a given exchange can trade a lot easier.
     function performTrade(Order order, uint amount, bytes32 hash) internal {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
-
-        // @todo consider fee bias
 
         vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
 
