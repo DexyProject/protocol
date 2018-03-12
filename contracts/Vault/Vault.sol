@@ -17,6 +17,7 @@ contract Vault is Ownable, VaultInterface {
     // user => exchange => approved
     mapping (address => mapping (address => bool)) approved;
     mapping (address => mapping (address => uint)) balances;
+    mapping (address => uint) accounted;
 
     mapping (address => bool) public isERC777;
 
@@ -44,6 +45,7 @@ contract Vault is Ownable, VaultInterface {
         require(balanceOf(token, msg.sender) >= amount);
 
         balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
+        accounted[token] = accounted[token].sub(amount);
 
         if (token == ETH) {
             msg.sender.transfer(amount);
@@ -94,6 +96,15 @@ contract Vault is Ownable, VaultInterface {
         isERC777[token] = false;
     }
 
+    function withdrawOverflow(address token) public onlyOwner {
+        if (token == ETH) {
+            msg.sender.transfer(overflow(token));
+            return;
+        }
+
+        ERC20(token).transfer(msg.sender, overflow(token));
+    }
+
     function setExchange(address _exchange) public onlyOwner {
         require(_exchange != 0x0);
         exchange = _exchange;
@@ -103,8 +114,17 @@ contract Vault is Ownable, VaultInterface {
         return balances[token][user];
     }
 
+    function overflow(address token) internal view returns (uint) {
+        if (token == ETH) {
+            return this.balance.sub(accounted[token]);
+        }
+
+        return ERC20(token).balanceOf(this).sub(accounted[token]);
+    }
+
     function depositFor(address user, address token, uint amount) private {
         balances[token][user] = balances[token][user].add(amount);
+        accounted[token] = accounted[token].add(amount);
         Deposited(user, token, amount);
     }
 }

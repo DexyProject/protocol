@@ -48,6 +48,20 @@ contract('Vault', function (accounts) {
             await vault.withdraw(0x0, using, {from: accounts[0]});
             assert.equal(await vault.balanceOf.call(0x0, accounts[0]), 0);
         });
+
+        it('should allow withdrawing of overflow', async () => {
+            await vault.deposit(token.address, 10, {from: accounts[0]});
+            await token.transfer(vault.address, 10, {from: accounts[0]});
+
+            let previousBalance = await token.balanceOf(accounts[0]);
+
+            assert.equal(await token.balanceOf(vault.address), 20);
+            await vault.withdrawOverflow(token.address, {from: accounts[0]});
+            assert.equal(await token.balanceOf(vault.address), 10);
+
+            let balance = await token.balanceOf(accounts[0]);
+            assert.equal(balance.toString(18), previousBalance.plus(10).toString(18));
+        })
     });
 
     context('ERC777', async () => {

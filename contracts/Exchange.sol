@@ -3,6 +3,7 @@ pragma solidity ^0.4.18;
 import "./ExchangeInterface.sol";
 import "./SafeMath.sol";
 import "./Vault/VaultInterface.sol";
+import "./Tokens/ERC20.sol";
 import "./Ownership/Ownable.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
@@ -119,6 +120,15 @@ contract Exchange is Ownable, ExchangeInterface {
     function setFeeAccount(address _feeAccount) public onlyOwner {
         require(_feeAccount != 0x0);
         feeAccount = _feeAccount;
+    }
+
+    function withdraw(address token, uint amount) public onlyOwner {
+        if (token == 0x0) {
+            msg.sender.transfer(amount);
+            return;
+        }
+
+        ERC20(token).transfer(msg.sender, amount);
     }
 
     function filled(address user, bytes32 hash) public view returns (uint) {
