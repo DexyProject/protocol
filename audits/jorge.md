@@ -13,7 +13,7 @@ money for trading in Dexy.
 total to review, communicate with the team about it and produce this report.
 Don't take it too seriously.
 - No guarantees and all the legal boring stuff. If something breaks and people lose money, they should go tweet [Dean](https://twitter.com/DeanEigenmann).
-- A checksum of this file will be sent in the transaction data of a 0 value
+- A SHA256 checksum of this file will be sent in the transaction data of a 0 value
 transfer to the 0th account made with my verified account
 `0x4838eab6f43841e0d233db4cea47bd64f614f0c5`
 [Proof](https://etherscan.io/tx/0x5aaeb2d0361dbdf3b4ecadad1b49c239eb1b3b5e1cf973f6a4597ad56edc47b9). For obvious inception reasons the transaction hash of that
@@ -29,6 +29,13 @@ completely trustless exchange.
 - Because of its design Dexy will provide the best UX in the (DEX) game.
 - Please increase test coverage.
 
+## Fixes
+
+- After handing in this report, one high severity issue, one medium and one low
+have been fixed and the exchange will be deployed with those.
+- There is still one low severity issue not solved that is mostly related to
+documentation.
+
 ## Review
 
 ### Smart contract code
@@ -39,7 +46,7 @@ No critical issues were found.
 
 #### High severity
 
-##### Exchange operator can steal from taker by frontrunning a trade transaction with a `Exchange.setFees(...)` transaction
+##### (FIXED) Exchange operator can steal from taker by frontrunning a trade transaction with a `Exchange.setFees(...)` transaction
 - https://github.com/DexyProject/contracts/blob/4a0197fe327a002b45b3081241aaac86f1abcbff/contracts/Exchange.sol#L201
 - Because fees are not part of the orders themselves but just taken from a
 storage value set by the operator, the operator can change the fee to a very
@@ -48,13 +55,16 @@ entire amount they are taking.
 - I suggest allowing the trader to pass the `takerFee` they are willing
 to pay to `trade(...)` or adding a hardcoded max fee to the exchange code (say
 5%).
+- FIX: https://github.com/DexyProject/contracts/commit/a2edcea876ea12fbc10ec66f225cf934897966e7#diff-a5e6c43f03b96911facdf9d4e9b82b9cR118
 
 #### Medium severity
 
-##### Fee math bug requires taker to have an extra balance to pay for fees
+##### (FIXED) Fee math bug requires taker to have an extra balance to pay for fees
 - https://github.com/DexyProject/contracts/blob/development/contracts/Exchange.sol#L206
 
 - I recommend just changing `give` for `give.sub(tradeTakerFee)`
+- FIX: https://github.com/DexyProject/contracts/commit/a2edcea876ea12fbc10ec66f225cf934897966e7#diff-a5e6c43f03b96911facdf9d4e9b82b9cR208
+
 
 #### Low severity
 
@@ -64,10 +74,11 @@ balance because of the implicit underflow check in SafeMath.
 - Even though I cannot think of any way to exploit this, it would be more future
 proof to at least add a comment or assertion on this.
 
-##### `withdrawOverflow(...)` does not support `ERC777.send(...)`
+##### (FIXED) `withdrawOverflow(...)` does not support `ERC777.send(...)`
 - Potentially low risk as the transfer method is backwards compatible.
 - If the operator is a contract by adding this, the contract could get a callback
 when an overflow is withdrawn.
+- FIX: https://github.com/DexyProject/contracts/commit/a2edcea876ea12fbc10ec66f225cf934897966e7#diff-1087dd2047aa77a42d016220179d02d5R105
 
 #### Comments
 
@@ -81,7 +92,7 @@ this purpose so it might be a good idea to wait.
 change its nature, and that value can be cached, saving 1 call in every
 interaction.
 - It is already done when receiving a callback from the token, so this might
-be innecesary.
+be innecessary.
 
 ##### Upgrading to new Exchange version requires explicit transaction to Vault
 - It should be possible for users to provide a message signing their approval

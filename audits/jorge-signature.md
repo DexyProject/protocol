@@ -1,0 +1,4 @@
+- SHA256 checksum: `7077d69aa80628107ae909d96a5750542349cd6361a4e110d106922d3333f611`
+- Compute: `shasum -a 256 audits/jorge.md`
+- Signed by: `0x4838eab6f43841e0d233db4cea47bd64f614f0c5`
+- Transaction: `[0x793bf07f45cb0fa87dcb1ffa4a34f0c0137220775b3aee41a3cf6dc3a97533f0](https://etherscan.io/tx/0x793bf07f45cb0fa87dcb1ffa4a34f0c0137220775b3aee41a3cf6dc3a97533f0)`
