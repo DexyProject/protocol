@@ -20,6 +20,7 @@
     "url": "git+https://github.com/DEXY/contracts.git"
   },
   "devDependencies": {
+    "solidity-coverage": "^0.3.5",
     "solium": "^1.0.4",
     "truffle": "^4.0.0"
   },
@@ -28,5 +29,8 @@
     "ethereum",
     "smart",
     "contracts"
-  ]
+  ],
+  "dependencies": {
+    "ganache-cli": "^6.1.0"
+  }
 }

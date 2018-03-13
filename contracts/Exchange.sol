@@ -1,7 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
-import "./SafeMath.sol";
+import "./Libraries/SafeMath.sol";
 import "./Vault/VaultInterface.sol";
 import "./Tokens/ERC20.sol";
 import "./Ownership/Ownable.sol";

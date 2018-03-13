@@ -4,7 +4,7 @@ import "./VaultInterface.sol";
 import "../Tokens/ERC20.sol";
 import "../Tokens/ERC777.sol";
 import "../Ownership/Ownable.sol";
-import "../SafeMath.sol";
+import "../Libraries/SafeMath.sol";
 
 contract Vault is Ownable, VaultInterface {
 
@@ -77,11 +77,11 @@ contract Vault is Ownable, VaultInterface {
         return approved[user][exchange];
     }
 
-    function tokenFallback(address from, uint value, bytes data) public {
+    function tokenFallback(address from, uint value, bytes) public {
         depositFor(from, msg.sender, value);
     }
 
-    function tokensReceived(address operator, address from, address to, uint amount, bytes userData, bytes operatorData) public {
+    function tokensReceived(address operator, address from, address to, uint amount, bytes, bytes) public {
         if (!isERC777[msg.sender]) {
             isERC777[msg.sender] = true;
         }
