@@ -66,7 +66,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = orderHash(order);
 
-        require(vault.balanceOf(order.tokenGet,msg.sender) >= amount);
+        require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
         require(canTradeInternal(order, v, r, s, amount, mode, hash));
 
         performTrade(order, amount, hash);
