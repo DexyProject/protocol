@@ -1,5 +1,6 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
+const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
 const utils = require('./helpers/Utils.js');
 
 contract('Vault', function (accounts) {
@@ -60,7 +61,7 @@ contract('Vault', function (accounts) {
             assert.equal(await vault.balanceOf.call(0x0, accounts[0]), 0);
         });
 
-        it('should allow withdrawing of overflow', async () => {
+        it('should allow withdrawing of overflow tokens', async () => {
             await vault.deposit(token.address, 10, {from: accounts[0]});
             await token.transfer(vault.address, 10, {from: accounts[0]});
 
@@ -72,6 +73,17 @@ contract('Vault', function (accounts) {
 
             let balance = await token.balanceOf(accounts[0]);
             assert.equal(balance.toString(18), previousBalance.plus(10).toString(18));
+        })
+
+        it('should allow withdrawing of overflow eth', async () => {
+            let selfdestruct = await SelfDestructor.new();
+            await selfdestruct.sendTransaction({from: accounts[0], value: 10});
+            await selfdestruct.destroy(vault.address);
+            await vault.deposit(0x0, 10, {from: accounts[0], value: 10});
+
+            assert.equal(await web3.eth.getBalance(vault.address), 20);
+            await vault.withdrawOverflow(0x0, {from: accounts[0]});
+            assert.equal(await web3.eth.getBalance(vault.address), 10);
         })
     });
 
