@@ -51,19 +51,19 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param amount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
-    /// @param amount Amount of the order to be filled.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function trade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) external {
+    function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external {
         Order memory order = createOrder(addresses, values);
 
         require(msg.sender != order.user);
         bytes32 hash = orderHash(order);
 
         require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
-        require(canTradeInternal(order, v, r, s, amount, mode, hash));
+        require(canTradeInternal(order, amount, v, r, s, mode, hash));
 
         performTrade(order, amount, hash);
 
@@ -119,18 +119,18 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param amount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
-    /// @param amount Amount of the order to be filled.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) public view returns (bool) {
+    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) public view returns (bool) {
         Order memory order = createOrder(addresses, values);
 
         bytes32 hash = orderHash(order);
 
-        return canTradeInternal(order, v, r, s, amount, mode, hash);
+        return canTradeInternal(order, amount, v, r, s, mode, hash);
     }
 
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
@@ -150,7 +150,7 @@ contract Exchange is Ownable, ExchangeInterface {
         return ecrecover(hash, v, r, s) == addr;
     }
 
-    function canTradeInternal(Order order, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode, bytes32 hash) internal view returns (bool) {
+    function canTradeInternal(Order order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
         if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
