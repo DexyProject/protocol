@@ -61,15 +61,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param amount Amount of the order to be filled.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     function trade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) external {
-        Order memory order = Order({
-            user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
-            expires: values[2],
-            nonce: values[3]
-        });
+        Order memory order = createOrder(addresses, values);
 
         require(msg.sender != order.user);
         bytes32 hash = orderHash(order);
@@ -93,15 +85,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function cancel(address[3] addresses, uint[4] values) external {
-        Order memory order = Order({
-            user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
-            expires: values[2],
-            nonce: values[3]
-        });
+        Order memory order = createOrder(addresses, values);
 
         require(msg.sender == order.user);
         require(order.amountGive > 0 && order.amountGet > 0);
@@ -146,15 +130,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
     function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint amount, uint mode) public view returns (bool) {
-        Order memory order = Order({
-            user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
-            expires: values[2],
-            nonce: values[3]
-        });
+        Order memory order = createOrder(addresses, values);
 
         bytes32 hash = orderHash(order);
 
@@ -215,5 +191,17 @@ contract Exchange is Ownable, ExchangeInterface {
             HASH_SCHEME,
             keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
         );
+    }
+
+    function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order) {
+        return Order({
+            user: addresses[0],
+            tokenGive: addresses[1],
+            tokenGet: addresses[2],
+            amountGive: values[0],
+            amountGet: values[1],
+            expires: values[2],
+            nonce: values[3]
+        });
     }
 }
