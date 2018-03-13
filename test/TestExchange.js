@@ -95,7 +95,7 @@ contract('Exchange', function (accounts) {
 
         it('should not allow user to trade own order', async () => {
             try {
-                await exchange.trade(addresses, values, v, r, s, 10, 0, {from: accounts[0]});
+                await exchange.trade(addresses, values, 10, v, r, s, 0, {from: accounts[0]});
             } catch (error) {
                 return utils.ensureException(error);
             }
