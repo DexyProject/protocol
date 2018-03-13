@@ -73,7 +73,7 @@ contract('Vault', function (accounts) {
 
             let balance = await token.balanceOf(accounts[0]);
             assert.equal(balance.toString(18), previousBalance.plus(10).toString(18));
-        })
+        });
 
         it('should allow withdrawing of overflow eth', async () => {
             let selfdestruct = await SelfDestructor.new();
@@ -84,18 +84,42 @@ contract('Vault', function (accounts) {
             assert.equal(await web3.eth.getBalance(vault.address), 20);
             await vault.withdrawOverflow(0x0, {from: accounts[0]});
             assert.equal(await web3.eth.getBalance(vault.address), 10);
-        })
+        });
     });
 
-    context('ERC777', async () => {
+    it('should allow setting and unsetting of ERC777 token', async () => {
+        await vault.setERC777(token.address, {from: accounts[0]});
+        assert.equal(await vault.isERC777(token.address), true);
 
-        it('should allow setting and unsetting of ERC777 token', async () => {
-            await vault.setERC777(token.address, {from: accounts[0]});
-            assert.equal(await vault.isERC777(token.address), true);
+        await vault.unsetERC777(token.address, {from: accounts[0]});
+        assert.equal(await vault.isERC777(token.address), false);
+    });
 
-            await vault.unsetERC777(token.address, {from: accounts[0]});
-            assert.equal(await vault.isERC777(token.address), false);
-        })
+    it('should allow a user to approve and unapprove an exchange', async () => {
+        await vault.setExchange(accounts[1]);
 
-    })
+        assert.equal(await vault.isApproved(accounts[0], accounts[1]), false);
+
+        await vault.approve(accounts[1], {from: accounts[0]});
+        assert.equal(await vault.isApproved(accounts[0], accounts[1]), true);
+
+        await vault.unapprove(accounts[1], {from: accounts[0]});
+        assert.equal(await vault.isApproved(accounts[0], accounts[1]), false);
+    });
+
+    it('should allow funds to be transferred', async () => {
+        let exchange = accounts[2];
+
+        await vault.setExchange(exchange);
+        await vault.approve(exchange, {from: accounts[0]});
+
+        let sum = 30;
+
+        await token.mint(accounts[0], sum);
+        await vault.deposit(token.address, sum, {from: accounts[0]});
+        assert.equal(await vault.balanceOf.call(token.address, accounts[0]), sum);
+
+        await vault.transfer(token.address, accounts[0], accounts[1], sum, {from: exchange});
+        assert.equal(await vault.balanceOf.call(token.address, accounts[1]), sum);
+    });
 });

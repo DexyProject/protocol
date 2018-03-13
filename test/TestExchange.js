@@ -101,7 +101,7 @@ contract('Exchange', function (accounts) {
             }
 
             assert.fail('trade did not fail');
-        })
+        });
     });
 
 });
