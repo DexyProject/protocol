@@ -61,4 +61,47 @@ contract('Exchange', function (accounts) {
         });
     });
 
+    describe('trade', async () => {
+
+        let order, addresses, values, hash;
+        let v, r, s;
+
+        beforeEach(async () => {
+            order = {
+                tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+                amountGet: '10',
+                tokenGive: '0x000000000000000000000000000000000000000',
+                amountGive: '100',
+                expires: Math.floor((Date.now() / 1000) + 5000),
+                nonce: 10,
+                user: accounts[0],
+                exchange: exchange.address
+            };
+
+            addresses = [order.user, order.tokenGive, order.tokenGet];
+            values = [order.amountGive, order.amountGet, order.expires, order.nonce];
+
+            var valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
+                return value
+            }));
+
+            hash = web3.sha3(schema_hash, valuesHash);
+
+            let sig = web3.eth.sign(accounts[0], hash).substr(2);
+            r = '0x' + sig.slice(0, 64)
+            s = '0x' + sig.slice(64, 128)
+            v = web3.toDecimal('0x' + sig.slice(128, 130));
+        });
+
+        it('should not allow user to trade own order', async () => {
+            try {
+                await exchange.trade(addresses, values, v, r, s, 10, 0, {from: accounts[0]});
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('trade did not fail');
+        })
+    });
+
 });
