@@ -49,10 +49,6 @@ contract Exchange is Ownable, ExchangeInterface {
         vault = _vault;
     }
 
-    function () public payable {
-        revert();
-    }
-
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param v ECDSA signature parameter v.

@@ -1,5 +1,6 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
+const utils = require('./helpers/Utils.js');
 
 contract('Vault', function (accounts) {
 
@@ -11,6 +12,16 @@ contract('Vault', function (accounts) {
     });
 
     context('funds', async () => {
+
+        it('should revert when directly depositing ether', async () => {
+            try {
+                await vault.sendTransaction({from: accounts[0], value: 1});
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('depositing ether did not fail');
+        });
 
         it('should allow depositing of token', async () => {
             let total = 30;
