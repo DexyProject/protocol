@@ -141,6 +141,7 @@ contract('Exchange', function (accounts) {
             assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1), false);
         });
 
+        // @todo this test doesn't work, it seems to fail on signing.
         it('should return false when order is cancelled', async () => {
             await exchange.cancel(addresses, values);
             assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);

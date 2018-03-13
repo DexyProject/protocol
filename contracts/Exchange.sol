@@ -151,9 +151,9 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTradeInternal(Order order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
-            return false;
-        }
+//        if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
+//            return false;
+//        }
 
         if (cancelled[hash]) {
             return false;
