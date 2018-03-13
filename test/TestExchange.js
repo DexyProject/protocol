@@ -49,7 +49,6 @@ contract('Exchange', function (accounts) {
             assert.equal(result['logs'][0]['event'], 'Cancelled');
         });
 
-
         it('should prevent user to cancel other users order', async () => {
             try {
                 await exchange.cancel(addresses, values, {from: accounts[1]});
