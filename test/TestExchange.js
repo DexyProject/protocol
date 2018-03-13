@@ -131,9 +131,9 @@ contract('Exchange', function (accounts) {
             hash = web3.sha3(schema_hash, valuesHash);
 
             let sig = web3.eth.sign(accounts[0], hash).slice(2);
-            r = '0x' + sig.substring(0, 64)
-            s = '0x' + sig.substring(64, 128)
-            v = parseInt(sig.substring(128, 130), 16) + 27
+            r = '0x' + sig.substring(0, 64);
+            s = '0x' + sig.substring(64, 128);
+            v = parseInt(sig.substring(128, 130), 16) + 27;
         });
 
         it('should return false when order is signed by different user', async () => {
