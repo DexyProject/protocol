@@ -1,4 +1,4 @@
-const SafeMath = artifacts.require("./SafeMath.sol");
+const SafeMath = artifacts.require("./Libraries/SafeMath.sol");
 const Exchange = artifacts.require("./Exchange.sol");
 const Vault = artifacts.require("./Vault/Vault.sol");
 
