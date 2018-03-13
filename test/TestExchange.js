@@ -87,10 +87,10 @@ contract('Exchange', function (accounts) {
 
             hash = web3.sha3(schema_hash, valuesHash);
 
-            let sig = web3.eth.sign(accounts[0], hash).substr(2);
-            r = '0x' + sig.slice(0, 64)
-            s = '0x' + sig.slice(64, 128)
-            v = web3.toDecimal('0x' + sig.slice(128, 130));
+            let sig = web3.eth.sign(accounts[0], hash).slice(2);
+            r = '0x' + sig.substring(0, 64)
+            s = '0x' + sig.substring(64, 128)
+            v = parseInt(sig.substring(128, 130), 16) + 27
         });
 
         it('should not allow user to trade own order', async () => {
@@ -104,4 +104,46 @@ contract('Exchange', function (accounts) {
         });
     });
 
+    describe('canTrade', async () => {
+
+        let order, addresses, values, hash;
+        let v, r, s;
+
+        beforeEach(async () => {
+            order = {
+                tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+                amountGet: '10',
+                tokenGive: '0x000000000000000000000000000000000000000',
+                amountGive: '100',
+                expires: Math.floor((Date.now() / 1000) + 5000),
+                nonce: 10,
+                user: accounts[0],
+                exchange: exchange.address
+            };
+
+            addresses = [order.user, order.tokenGive, order.tokenGet];
+            values = [order.amountGive, order.amountGet, order.expires, order.nonce];
+
+            let valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
+                return value
+            }));
+
+            hash = web3.sha3(schema_hash, valuesHash);
+
+            let sig = web3.eth.sign(accounts[0], hash).slice(2);
+            r = '0x' + sig.substring(0, 64)
+            s = '0x' + sig.substring(64, 128)
+            v = parseInt(sig.substring(128, 130), 16) + 27
+        });
+
+        it('should return false when order is signed by different user', async () => {
+            addresses[0] = accounts[1];
+            assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1), false);
+        });
+
+        it('should return false when order is cancelled', async () => {
+            await exchange.cancel(addresses, values);
+            assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);
+        });
+    });
 });

@@ -12,7 +12,7 @@ contract('Vault', function (accounts) {
         vault = await Vault.new();
     });
 
-    context('funds', async () => {
+    describe('funds', async () => {
 
         it('should revert when directly depositing ether', async () => {
             try {
@@ -60,6 +60,9 @@ contract('Vault', function (accounts) {
             await vault.withdraw(0x0, using, {from: accounts[0]});
             assert.equal(await vault.balanceOf.call(0x0, accounts[0]), 0);
         });
+    });
+
+    describe('overflow', async () => {
 
         it('should allow withdrawing of overflow tokens', async () => {
             await vault.deposit(token.address, 10, {from: accounts[0]});

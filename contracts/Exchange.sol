@@ -174,7 +174,9 @@ contract Exchange is Ownable, ExchangeInterface {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
-        vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
+        if (tradeTakerFee > 0) {
+            vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
+        }
 
         vault.transfer(order.tokenGet, msg.sender, order.user, amount);
         vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
