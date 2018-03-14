@@ -32,9 +32,7 @@ contract Vault is Ownable, VaultInterface {
         uint value = amount;
         if (token == ETH) {
             value = msg.value;
-        }
-
-        if (token != ETH) {
+        } else {
             require(ERC20(token).transferFrom(msg.sender, address(this), value));
         }
 
