@@ -150,7 +150,7 @@ contract Exchange is Ownable, ExchangeInterface {
         return ecrecover(hash, v, r, s) == addr;
     }
 
-    function canTradeInternal(Order order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
+    function canTradeInternal(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
         if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
@@ -170,7 +170,7 @@ contract Exchange is Ownable, ExchangeInterface {
         return order.expires > now && fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
-    function performTrade(Order order, uint amount, bytes32 hash) internal {
+    function performTrade(Order memory order, uint amount, bytes32 hash) internal {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
@@ -184,14 +184,14 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
-    function orderHash(Order order) internal view returns (bytes32) {
+    function orderHash(Order memory order) internal view returns (bytes32) {
         return keccak256(
             HASH_SCHEME,
             keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
         );
     }
 
-    function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order) {
+    function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
         return Order({
             user: addresses[0],
             tokenGive: addresses[1],
