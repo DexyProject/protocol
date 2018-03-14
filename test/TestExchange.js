@@ -11,6 +11,7 @@ contract('Exchange', function (accounts) {
     beforeEach(async () => {
         vault = await Vault.new();
         exchange = await Exchange.new(2500000000000000, accounts[2], vault.address);
+        await vault.setExchange(exchange.address)
     });
 
     it('should revert when depositing ether', async () => {
@@ -105,12 +106,15 @@ contract('Exchange', function (accounts) {
 
     describe('canTrade', async () => {
 
-        let order, addresses, values, hash;
+        let order, addresses, values, hash, token;
         let v, r, s;
 
         beforeEach(async () => {
+
+            token = await MockToken.new();
+
             order = {
-                tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+                tokenGet: token.address,
                 amountGet: '10',
                 tokenGive: '0x000000000000000000000000000000000000000',
                 amountGive: '100',
@@ -143,6 +147,26 @@ contract('Exchange', function (accounts) {
         // @todo this test doesn't work, it seems to fail on signing.
         it('should return false when order is cancelled', async () => {
             await exchange.cancel(addresses, values);
+            assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);
+        });
+
+        it('should return false when users do not have enough funds', async () => {
+            assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);
+        });
+
+        it('should return false when vault has not been approved', async () => {
+            await token.mint(accounts[0], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[0]});
+
+            assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);
+        });
+
+        it('should return false when vault has not been approved', async () => {
+            await token.mint(accounts[0], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[0]});
+
+            await vault.approve(exchange.address, {from: accounts[0]});
+
             assert.equal(await exchange.canTrade(addresses, values, 10, v, r, s, 1, {from: addresses[0]}), false);
         });
     });
