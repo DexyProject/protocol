@@ -1,6 +1,6 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
-const Exchange = artifacts.require('./mocks/MockToken.sol');
+const MockToken = artifacts.require('./mocks/Token.sol');
 const utils = require('./helpers/Utils.js');
 
 contract('Exchange', function (accounts) {
@@ -83,7 +83,7 @@ contract('Exchange', function (accounts) {
             values = [order.amountGive, order.amountGet, order.expires, order.nonce];
 
             var valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
-                return value
+                return value[1]
             }));
 
             hash = web3.sha3(schema_hash, valuesHash);
@@ -129,7 +129,7 @@ contract('Exchange', function (accounts) {
             values = [order.amountGive, order.amountGet, order.expires, order.nonce];
 
             let valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
-                return value
+                return value[1]
             }));
 
             hash = web3.sha3(schema_hash, valuesHash);
