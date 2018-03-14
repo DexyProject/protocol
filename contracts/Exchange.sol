@@ -150,6 +150,20 @@ contract Exchange is Ownable, ExchangeInterface {
         return ecrecover(hash, v, r, s) == addr;
     }
 
+    function performTrade(Order memory order, uint amount, bytes32 hash) internal {
+        uint give = order.amountGive.mul(amount).div(order.amountGet);
+        uint tradeTakerFee = give.mul(takerFee).div(1 ether);
+
+        if (tradeTakerFee > 0) {
+            vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
+        }
+
+        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
+        vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
+
+        fills[order.user][hash] = fills[order.user][hash].add(amount);
+    }
+
     function canTradeInternal(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
         if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
@@ -172,20 +186,6 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         return fills[order.user][hash].add(amount) <= order.amountGet;
-    }
-
-    function performTrade(Order memory order, uint amount, bytes32 hash) internal {
-        uint give = order.amountGive.mul(amount).div(order.amountGet);
-        uint tradeTakerFee = give.mul(takerFee).div(1 ether);
-
-        if (tradeTakerFee > 0) {
-            vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
-        }
-
-        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
-        vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
-
-        fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
     function orderHash(Order memory order) internal view returns (bytes32) {
