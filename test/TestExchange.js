@@ -1,6 +1,7 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
 const utils = require('./helpers/Utils.js');
+const web3Utils = require('web3-utils');
 
 contract('Exchange', function (accounts) {
 
@@ -32,7 +33,7 @@ contract('Exchange', function (accounts) {
             order = {
                 tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
                 amountGet: '10',
-                tokenGive: '0x000000000000000000000000000000000000000',
+                tokenGive: '0x0000000000000000000000000000000000000000',
                 amountGive: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
@@ -70,7 +71,7 @@ contract('Exchange', function (accounts) {
             order = {
                 tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
                 amountGet: '10',
-                tokenGive: '0x000000000000000000000000000000000000000',
+                tokenGive: '0x0000000000000000000000000000000000000000',
                 amountGive: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
@@ -81,11 +82,9 @@ contract('Exchange', function (accounts) {
             addresses = [order.user, order.tokenGive, order.tokenGet];
             values = [order.amountGive, order.amountGet, order.expires, order.nonce];
 
-            var valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
-                return value
-            }));
+            var valuesHash = web3Utils.soliditySha3.apply(null, Object.entries(order).map(function(x) { return x[1] }));
 
-            hash = web3.sha3(schema_hash, valuesHash);
+            hash = web3Utils.soliditySha3(schema_hash, valuesHash);
 
             let sig = web3.eth.sign(accounts[0], hash).slice(2);
             r = '0x' + sig.substring(0, 64)
@@ -116,7 +115,7 @@ contract('Exchange', function (accounts) {
             order = {
                 tokenGet: token.address,
                 amountGet: '10',
-                tokenGive: '0x000000000000000000000000000000000000000',
+                tokenGive: '0x0000000000000000000000000000000000000000',
                 amountGive: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
@@ -127,11 +126,9 @@ contract('Exchange', function (accounts) {
             addresses = [order.user, order.tokenGive, order.tokenGet];
             values = [order.amountGive, order.amountGet, order.expires, order.nonce];
 
-            let valuesHash = web3.sha3.apply(null, Object.entries(order).forEach(value => {
-                return value
-            }));
+            let valuesHash = web3Utils.soliditySha3.apply(null, Object.entries(order).map(function(x) { return x[1] }));
 
-            hash = web3.sha3(schema_hash, valuesHash);
+            hash = web3Utils.soliditySha3(schema_hash, valuesHash);
 
             let sig = web3.eth.sign(accounts[0], hash).slice(2);
             r = '0x' + sig.substring(0, 64);
