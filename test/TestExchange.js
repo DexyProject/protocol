@@ -1,5 +1,6 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
+const Exchange = artifacts.require('./mocks/MockToken.sol');
 const utils = require('./helpers/Utils.js');
 
 contract('Exchange', function (accounts) {
