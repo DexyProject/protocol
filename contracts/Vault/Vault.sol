@@ -1,10 +1,10 @@
 pragma solidity ^0.4.20;
 
 import "./VaultInterface.sol";
+import "../Libraries/SafeMath.sol";
+import "../Ownership/Ownable.sol";
 import "../Tokens/ERC20.sol";
 import "../Tokens/ERC777.sol";
-import "../Ownership/Ownable.sol";
-import "../Libraries/SafeMath.sol";
 
 contract Vault is Ownable, VaultInterface {
 
