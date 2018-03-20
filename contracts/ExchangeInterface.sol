@@ -7,8 +7,8 @@ interface ExchangeInterface {
 
     function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external;
     function cancel(address[3] addresses, uint[4] values) external;
-    function filled(address user, bytes32 hash) public view returns (uint);
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) public view returns (bool);
+    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external view returns (bool);
+    function filled(address user, bytes32 hash) external view returns (uint);
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint);
 
 }

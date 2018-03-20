@@ -2,9 +2,9 @@ pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
-import "./Vault/VaultInterface.sol";
-import "./Tokens/ERC20.sol";
 import "./Ownership/Ownable.sol";
+import "./Tokens/ERC20.sol";
+import "./Vault/VaultInterface.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
@@ -33,7 +33,7 @@ contract Exchange is Ownable, ExchangeInterface {
         "address Exchange"
     );
 
-    uint256 constant public MAX_FEE = 5000000000000000; // 0.5%
+    uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
 
     VaultInterface public vault;
 
@@ -44,9 +44,29 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (bytes32 => bool) cancelled;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
+        require(vault != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
         vault = _vault;
+    }
+
+    function setFees(uint _takerFee) external onlyOwner {
+        require(_takerFee <= MAX_FEE);
+        takerFee = _takerFee;
+    }
+
+    function setFeeAccount(address _feeAccount) external onlyOwner {
+        require(_feeAccount != 0x0);
+        feeAccount = _feeAccount;
+    }
+
+    function withdraw(address token, uint amount) external onlyOwner {
+        if (token == 0x0) {
+            msg.sender.transfer(amount);
+            return;
+        }
+
+        ERC20(token).transfer(msg.sender, amount);
     }
 
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
@@ -94,29 +114,6 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
-    function setFees(uint _takerFee) public onlyOwner {
-        require(_takerFee <= MAX_FEE);
-        takerFee = _takerFee;
-    }
-
-    function setFeeAccount(address _feeAccount) public onlyOwner {
-        require(_feeAccount != 0x0);
-        feeAccount = _feeAccount;
-    }
-
-    function withdraw(address token, uint amount) public onlyOwner {
-        if (token == 0x0) {
-            msg.sender.transfer(amount);
-            return;
-        }
-
-        ERC20(token).transfer(msg.sender, amount);
-    }
-
-    function filled(address user, bytes32 hash) public view returns (uint) {
-        return fills[user][hash];
-    }
-
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param amount Amount of the order to be filled.
@@ -125,12 +122,16 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) public view returns (bool) {
+    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external view returns (bool) {
         Order memory order = createOrder(addresses, values);
 
         bytes32 hash = orderHash(order);
 
         return canTradeInternal(order, amount, v, r, s, mode, hash);
+    }
+
+    function filled(address user, bytes32 hash) external view returns (uint) {
+        return fills[user][hash];
     }
 
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
