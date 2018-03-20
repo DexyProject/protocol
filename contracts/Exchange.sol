@@ -44,20 +44,10 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (bytes32 => bool) cancelled;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
-        require(vault != 0x0);
+        require(address(_vault) != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
         vault = _vault;
-    }
-
-    function setFees(uint _takerFee) external onlyOwner {
-        require(_takerFee <= MAX_FEE);
-        takerFee = _takerFee;
-    }
-
-    function setFeeAccount(address _feeAccount) external onlyOwner {
-        require(_feeAccount != 0x0);
-        feeAccount = _feeAccount;
     }
 
     function withdraw(address token, uint amount) external onlyOwner {
@@ -132,6 +122,16 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
+    }
+
+    function setFees(uint _takerFee) public onlyOwner {
+        require(_takerFee <= MAX_FEE);
+        takerFee = _takerFee;
+    }
+
+    function setFeeAccount(address _feeAccount) public onlyOwner {
+        require(_feeAccount != 0x0);
+        feeAccount = _feeAccount;
     }
 
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
