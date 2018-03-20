@@ -73,7 +73,7 @@ contract Exchange is Ownable, ExchangeInterface {
         bytes32 hash = orderHash(order);
 
         require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
-        require(canTradeInternal(order, amount, v, r, s, mode, hash));
+        require(canTrade(order, amount, v, r, s, mode, hash));
 
         performTrade(order, amount, hash);
 
@@ -117,7 +117,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         bytes32 hash = orderHash(order);
 
-        return canTradeInternal(order, amount, v, r, s, mode, hash);
+        return canTrade(order, amount, v, r, s, mode, hash);
     }
 
     function filled(address user, bytes32 hash) external view returns (uint) {
@@ -165,7 +165,7 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
-    function canTradeInternal(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
+    function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
         if (!isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
