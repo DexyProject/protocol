@@ -141,14 +141,14 @@ contract Exchange is Ownable, ExchangeInterface {
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
-    function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) public pure returns (bool) {
+    function isValidSignature(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) public pure returns (bool) {
         if (mode == SigMode.GETH) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) == addr;
+            hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
         } else if (mode == SigMode.TREZOR) {
-            return ecrecover(keccak256("\x19Ethereum Signed Message:\n\x20", hash), v, r, s) == addr;
+            hash = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
         }
 
-        return ecrecover(hash, v, r, s) == addr;
+        return ecrecover(hash, v, r, s) == signer;
     }
 
     function performTrade(Order memory order, uint amount, bytes32 hash) internal {
@@ -166,7 +166,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTradeInternal(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!didSign(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
