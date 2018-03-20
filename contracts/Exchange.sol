@@ -44,7 +44,7 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (bytes32 => bool) cancelled;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
-        require(address(vault) != 0x0);
+        require(address(_vault) != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
         vault = _vault;
