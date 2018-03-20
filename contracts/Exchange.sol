@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
@@ -67,7 +67,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         performTrade(order, amount, hash);
 
-        Traded(
+        emit Traded(
             hash,
             order.tokenGive,
             order.amountGive * amount / order.amountGet,
@@ -91,7 +91,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(!cancelled[hash]);
 
         cancelled[hash] = true;
-        Cancelled(hash);
+        emit Cancelled(hash);
     }
 
     function setFees(uint _takerFee) public onlyOwner {

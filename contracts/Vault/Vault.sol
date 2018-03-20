@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 import "./VaultInterface.sol";
 import "../Tokens/ERC20.sol";
@@ -53,7 +53,7 @@ contract Vault is Ownable, VaultInterface {
             ERC20(token).transfer(msg.sender, amount);
         }
 
-        Withdrawn(msg.sender, token, amount);
+        emit Withdrawn(msg.sender, token, amount);
     }
 
     function approve(address _exchange) external {
@@ -129,6 +129,6 @@ contract Vault is Ownable, VaultInterface {
     function depositFor(address user, address token, uint amount) private {
         balances[token][user] = balances[token][user].add(amount);
         accounted[token] = accounted[token].add(amount);
-        Deposited(user, token, amount);
+        emit Deposited(user, token, amount);
     }
 }
