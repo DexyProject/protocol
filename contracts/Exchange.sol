@@ -40,6 +40,7 @@ contract Exchange is Ownable, ExchangeInterface {
     uint public takerFee = 0;
     address public feeAccount;
 
+    mapping (address => mapping (bytes32 => bool)) ordered;
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
@@ -104,6 +105,25 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    /// @param addresses Array of trade's tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    function order(address[2] addresses, uint[4] values) external {
+        Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
+
+        bytes32 hash = orderHash(order);
+        ordered[msg.sender][hash] = true;
+
+        Ordered(
+            order.user,
+            order.tokenGive,
+            order.tokenGet,
+            order.amountGive,
+            order.amountGet,
+            order.expires,
+            order.nonce
+        );
+    }
+
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param amount Amount of the order to be filled.
@@ -166,7 +186,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!ordered[msg.sender][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
