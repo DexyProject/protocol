@@ -40,7 +40,7 @@ contract Exchange is Ownable, ExchangeInterface {
     uint public takerFee = 0;
     address public feeAccount;
 
-    mapping (address => mapping (bytes32 => bool)) ordered;
+    mapping (address => mapping (bytes32 => bool)) orders;
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
@@ -111,7 +111,9 @@ contract Exchange is Ownable, ExchangeInterface {
         Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
 
         bytes32 hash = orderHash(order);
-        ordered[msg.sender][hash] = true;
+
+        require(!orders[msg.sender][hash]);
+        orders[msg.sender][hash] = true;
 
         Ordered(
             order.user,
@@ -142,6 +144,10 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
+    }
+
+    function ordered(address user, bytes32 hash) external view returns (bool) {
+        return orders[user][hash];
     }
 
     function setFees(uint _takerFee) public onlyOwner {
@@ -186,7 +192,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!ordered[msg.sender][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!orders[msg.sender][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 

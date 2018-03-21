@@ -29,6 +29,7 @@ interface ExchangeInterface {
     function order(address[2] addresses, uint[4] values) external;
     function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external view returns (bool);
     function filled(address user, bytes32 hash) external view returns (uint);
+    function ordered(address user, bytes32 hash) external view returns (bool);
     function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint);
 
 }
