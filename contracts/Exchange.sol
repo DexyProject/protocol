@@ -4,7 +4,6 @@ import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
-import "./Vault/VaultInterface.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
@@ -51,6 +50,9 @@ contract Exchange is Ownable, ExchangeInterface {
         vault = _vault;
     }
 
+    /// @dev Withdraws tokens accidentally sent to this contract.
+    /// @param token Address of the token to withdraw.
+    /// @param amount Amount of tokens to withdraw.
     function withdraw(address token, uint amount) external onlyOwner {
         if (token == 0x0) {
             msg.sender.transfer(amount);
@@ -141,7 +143,11 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external view returns (bool) {
+    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+        external
+        view
+        returns (bool)
+    {
         Order memory order = createOrder(addresses, values);
 
         bytes32 hash = orderHash(order);
@@ -149,32 +155,64 @@ contract Exchange is Ownable, ExchangeInterface {
         return canTrade(order, amount, v, r, s, mode, hash);
     }
 
+    /// @dev Returns how much of an order was filled.
+    /// @param user User who created the order.
+    /// @param hash Hash of the order.
+    /// @return Amount which was filled.
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
     }
 
+    /// @dev Checks if an order was created on chain.
+    /// @param user User who created the order.
+    /// @param hash Hash of the order.
+    /// @return Boolean if the order was created on chain.
     function ordered(address user, bytes32 hash) external view returns (bool) {
         return orders[user][hash];
     }
 
+    /// @dev Sets the taker fee.
+    /// @param _takerFee New taker fee.
     function setFees(uint _takerFee) public onlyOwner {
         require(_takerFee <= MAX_FEE);
         takerFee = _takerFee;
     }
 
+    /// @dev Sets the account where fees will be transferred to.
+    /// @param _feeAccount Address for the account.
     function setFeeAccount(address _feeAccount) public onlyOwner {
         require(_feeAccount != 0x0);
         feeAccount = _feeAccount;
     }
 
-    function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash) public view returns (uint) {
+    function vault() public view returns (VaultInterface) {
+        return vault;
+    }
+
+    function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash)
+        public
+        view
+        returns (uint)
+    {
         uint availableTaker = amountGet.sub(fills[user][hash]);
         uint availableMaker = vault.balanceOf(tokenGive, user).mul(amountGet).div(amountGive);
 
         return (availableTaker < availableMaker) ? availableTaker : availableMaker;
     }
 
-    function isValidSignature(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode) public pure returns (bool) {
+    /// @dev Checks if a given signature was signed by a signer.
+    /// @param signer Address of the signer.
+    /// @param hash Hash which was signed.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    /// @return Boolean if the hash was signed by the signer.
+    function isValidSignature(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode)
+        public
+        pure
+        returns (bool)
+    {
         if (mode == SigMode.GETH) {
             hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
         } else if (mode == SigMode.TREZOR) {
@@ -184,6 +222,10 @@ contract Exchange is Ownable, ExchangeInterface {
         return ecrecover(hash, v, r, s) == signer;
     }
 
+    /// @dev Executes the actual trade by transferring balances.
+    /// @param order Order to be traded.
+    /// @param amount Amount to be traded.
+    /// @param hash Hash of the order.
     function performTrade(Order memory order, uint amount, bytes32 hash) internal {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
@@ -198,7 +240,20 @@ contract Exchange is Ownable, ExchangeInterface {
         fills[order.user][hash] = fills[order.user][hash].add(amount);
     }
 
-    function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
+    /// @dev Indicates whether or not an certain amount of an order can be traded.
+    /// @param order Order to be traded.
+    /// @param amount Desired amount to be traded.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    /// @param hash Hash of the order.
+    /// @return Boolean if order can be traded
+    function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
+        internal
+        view
+        returns (bool)
+    {
         if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
