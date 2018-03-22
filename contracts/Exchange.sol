@@ -40,6 +40,7 @@ contract Exchange is Ownable, ExchangeInterface {
     uint public takerFee = 0;
     address public feeAccount;
 
+    mapping (address => mapping (bytes32 => bool)) orders;
     mapping (address => mapping (bytes32 => uint)) fills;
     mapping (bytes32 => bool) cancelled;
 
@@ -106,6 +107,31 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    /// @dev Creates an order which is then indexed in the orderbook.
+    /// @param addresses Array of trade's tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    function order(address[2] addresses, uint[4] values) external {
+        Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
+
+        require(vault.isApproved(order.user, this));
+        require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive)
+
+        bytes32 hash = orderHash(order);
+
+        require(!orders[msg.sender][hash]);
+        orders[msg.sender][hash] = true;
+
+        Ordered(
+            order.user,
+            order.tokenGive,
+            order.tokenGet,
+            order.amountGive,
+            order.amountGet,
+            order.expires,
+            order.nonce
+        );
+    }
+
     /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
@@ -125,6 +151,10 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
+    }
+
+    function ordered(address user, bytes32 hash) external view returns (bool) {
+        return orders[user][hash];
     }
 
     function setFees(uint _takerFee) public onlyOwner {
@@ -169,7 +199,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!orders[msg.sender][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
