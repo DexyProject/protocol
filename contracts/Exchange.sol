@@ -59,6 +59,7 @@ contract Exchange is Ownable, ExchangeInterface {
         ERC20(token).transfer(msg.sender, amount);
     }
 
+    /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param amount Amount of the order to be filled.
@@ -88,6 +89,7 @@ contract Exchange is Ownable, ExchangeInterface {
         );
     }
 
+    /// @dev Cancels an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function cancel(address[3] addresses, uint[4] values) external {
@@ -104,6 +106,7 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param amount Amount of the order to be filled.
