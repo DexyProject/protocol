@@ -222,13 +222,29 @@ contract Exchange is Ownable, ExchangeInterface {
         return fills[order.user][hash].add(amount) <= order.amountGet;
     }
 
+    /// @dev Hashes the order.
+    /// @param order Order to be hashed.
+    /// @return hash result
     function orderHash(Order memory order) internal view returns (bytes32) {
         return keccak256(
             HASH_SCHEME,
-            keccak256(order.tokenGet, order.amountGet, order.tokenGive, order.amountGive, order.expires, order.nonce, order.user, this)
+            keccak256(
+                order.tokenGet,
+                order.amountGet,
+                order.tokenGive,
+                order.amountGive,
+                order.expires,
+                order.nonce,
+                order.user,
+                this
+            )
         );
     }
 
+    /// @dev Creates order struct from value arrays.
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @return Order struct
     function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
         return Order({
             user: addresses[0],
