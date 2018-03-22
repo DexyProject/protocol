@@ -110,6 +110,9 @@ contract Exchange is Ownable, ExchangeInterface {
     function order(address[2] addresses, uint[4] values) external {
         Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
 
+        require(vault.isApproved(order.user, this));
+        require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive)
+
         bytes32 hash = orderHash(order);
 
         require(!orders[msg.sender][hash]);
