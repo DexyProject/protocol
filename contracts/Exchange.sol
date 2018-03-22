@@ -105,6 +105,7 @@ contract Exchange is Ownable, ExchangeInterface {
         Cancelled(hash);
     }
 
+    /// @dev Creates an order which is then indexed in the orderbook.
     /// @param addresses Array of trade's tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function order(address[2] addresses, uint[4] values) external {
