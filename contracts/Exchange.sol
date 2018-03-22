@@ -114,7 +114,7 @@ contract Exchange is Ownable, ExchangeInterface {
         Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
 
         require(vault.isApproved(order.user, this));
-        require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive)
+        require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive);
 
         bytes32 hash = orderHash(order);
 
