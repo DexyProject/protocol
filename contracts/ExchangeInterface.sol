@@ -43,9 +43,4 @@ interface ExchangeInterface {
 
     function vault() public view returns (VaultInterface);
 
-    function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash)
-        public
-        view
-        returns (uint);
-
 }

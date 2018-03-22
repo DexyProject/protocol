@@ -189,17 +189,6 @@ contract Exchange is Ownable, ExchangeInterface {
         return vault;
     }
 
-    function getVolume(uint amountGet, address tokenGive, uint amountGive, address user, bytes32 hash)
-        public
-        view
-        returns (uint)
-    {
-        uint availableTaker = amountGet.sub(fills[user][hash]);
-        uint availableMaker = vault.balanceOf(tokenGive, user).mul(amountGet).div(amountGive);
-
-        return (availableTaker < availableMaker) ? availableTaker : availableMaker;
-    }
-
     /// @dev Checks if a given signature was signed by a signer.
     /// @param signer Address of the signer.
     /// @param hash Hash which was signed.
@@ -262,7 +251,11 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (getVolume(order.amountGet, order.tokenGive, order.amountGive, order.user, hash) < amount) {
+        if (order.amountGet.sub(fills[order.user][hash]) < amount) {
+            return false;
+        }
+
+        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < amount) {
             return false;
         }
 

@@ -137,8 +137,8 @@ contract('Exchange', function (accounts) {
 
             await exchange.trade(data.addresses, data.values, order.amountGet, 0, '0x0', '0x0', 0, {from: accounts[1]});
 
-            // assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
-            // assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
     });
 
