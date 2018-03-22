@@ -199,7 +199,7 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash) internal view returns (bool) {
-        if (!orders[msg.sender][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 

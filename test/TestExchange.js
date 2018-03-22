@@ -124,6 +124,22 @@ contract('Exchange', function (accounts) {
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
+
+        it('should trade on chain created order correctly', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.approve(exchange.address);
+
+            await exchange.order([order.tokenGive, order.tokenGet], data.values, {from: accounts[0]});
+
+            await token.mint(accounts[1], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await vault.approve(exchange.address, {from: accounts[1]});
+
+            await exchange.trade(data.addresses, data.values, order.amountGet, 0, '0x0', '0x0', 0, {from: accounts[1]});
+
+            // assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            // assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+        });
     });
 
     describe('on chain orders', async () => {
