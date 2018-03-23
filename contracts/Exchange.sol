@@ -59,8 +59,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = order.hash();
 
-        require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
-        require(canTrade(order, amount, v, r, s, mode, hash));
+        require(canTrade(order, v, r, s, mode, hash));
 
         performTrade(order, amount, hash);
 
@@ -198,7 +197,8 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param amount Maximum amount to be traded.
     /// @param hash Hash of the order.
     function performTrade(OrderLibrary.Order memory order, uint amount, bytes32 hash) internal {
-        amount = SafeMath.min256(amount, order.amountGet.sub(fills[order.user][hash])); // @todo maybe take balance into consideration
+        // @todo consider taking vault balance into consideration too.
+        amount = SafeMath.min256(amount, order.amountGet.sub(fills[order.user][hash]));
 
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
@@ -246,6 +246,6 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        return order.expires <= now;
+        return order.expires > now;
     }
 }

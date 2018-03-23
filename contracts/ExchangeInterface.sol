@@ -33,7 +33,7 @@ interface ExchangeInterface {
 
     function order(address[2] addresses, uint[4] values) external;
 
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint8 mode)
         external
         view
         returns (bool);
