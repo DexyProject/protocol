@@ -46,7 +46,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param amount Amount of the order to be filled.
+    /// @param amount Maximum amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
@@ -120,13 +120,12 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param amount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint8 mode)
         external
         view
         returns (bool)
@@ -135,7 +134,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         bytes32 hash = order.hash();
 
-        return canTrade(order, amount, v, r, s, mode, hash);
+        return canTrade(order, v, r, s, mode, hash);
     }
 
     /// @dev Returns how much of an order was filled.
@@ -196,9 +195,11 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
-    /// @param amount Amount to be traded.
+    /// @param amount Maximum amount to be traded.
     /// @param hash Hash of the order.
     function performTrade(OrderLibrary.Order memory order, uint amount, bytes32 hash) internal {
+        amount = SafeMath.min256(amount, order.amountGet.sub(fills[order.user][hash])); // @todo maybe take balance into consideration
+
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
@@ -214,14 +215,13 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
     /// @param order Order to be traded.
-    /// @param amount Desired amount to be traded.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @param hash Hash of the order.
     /// @return Boolean if order can be traded
-    function canTrade(OrderLibrary.Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
+    function canTrade(OrderLibrary.Order memory order, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
         internal
         view
         returns (bool)
@@ -234,11 +234,11 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.amountGet.sub(fills[order.user][hash]) < amount) {
+        if (order.amountGet.sub(fills[order.user][hash]) == 0) {
             return false;
         }
 
-        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < amount) {
+        if (vault.balanceOf(order.tokenGive, order.user) == 0) {
             return false;
         }
 
@@ -246,10 +246,6 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.expires <= now) {
-            return false;
-        }
-
-        return fills[order.user][hash].add(amount) <= order.amountGet;
+        return order.expires <= now;
     }
 }
