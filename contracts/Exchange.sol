@@ -20,9 +20,9 @@ contract Exchange is Ownable, ExchangeInterface {
     uint public takerFee = 0;
     address public feeAccount;
 
-    mapping (address => mapping (bytes32 => bool)) orders;
-    mapping (address => mapping (bytes32 => uint)) fills;
-    mapping (bytes32 => bool) cancelled;
+    mapping (address => mapping (bytes32 => bool)) private orders;
+    mapping (address => mapping (bytes32 => uint)) private fills;
+    mapping (bytes32 => bool) private cancelled;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
@@ -51,7 +51,9 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external {
+    function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+        external
+    {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender != order.user);

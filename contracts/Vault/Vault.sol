@@ -15,9 +15,9 @@ contract Vault is Ownable, VaultInterface {
     address public exchange;
 
     // user => exchange => approved
-    mapping (address => mapping (address => bool)) approved;
-    mapping (address => mapping (address => uint)) balances;
-    mapping (address => uint) accounted;
+    mapping (address => mapping (address => bool)) private approved;
+    mapping (address => mapping (address => uint)) private balances;
+    mapping (address => uint) private accounted;
 
     mapping (address => bool) public isERC777;
 
@@ -48,9 +48,9 @@ contract Vault is Ownable, VaultInterface {
         if (token == ETH) {
             msg.sender.transfer(amount);
         } else if (isERC777[token]) {
-            ERC777(token).send(msg.sender, amount);
+            require(ERC777(token).send(msg.sender, amount));
         } else {
-            ERC20(token).transfer(msg.sender, amount);
+            require(ERC20(token).transfer(msg.sender, amount));
         }
 
         Withdrawn(msg.sender, token, amount);
@@ -102,11 +102,11 @@ contract Vault is Ownable, VaultInterface {
         }
 
         if (isERC777[token]) {
-            ERC777(token).send(msg.sender, overflow(token));
+            require(ERC777(token).send(msg.sender, overflow(token)));
             return;
         }
 
-        ERC20(token).transfer(msg.sender, overflow(token));
+        require(ERC20(token).transfer(msg.sender, overflow(token)));
     }
 
     function setExchange(address _exchange) public onlyOwner {
