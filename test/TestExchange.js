@@ -124,6 +124,105 @@ contract('Exchange', function (accounts) {
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
+
+        it('should trade on chain created order correctly', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.approve(exchange.address);
+
+            await exchange.order([order.tokenGive, order.tokenGet], data.values, {from: accounts[0]});
+
+            await token.mint(accounts[1], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await vault.approve(exchange.address, {from: accounts[1]});
+
+            await exchange.trade(data.addresses, data.values, order.amountGet, 0, '0x0', '0x0', 0, {from: accounts[1]});
+
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+        });
+    });
+
+    describe('on chain orders', async () => {
+
+        let order;
+        let token;
+        let data;
+
+        beforeEach(async () => {
+            token = await MockToken.new();
+
+            order = {
+                tokenGet: token.address,
+                amountGet: '10',
+                tokenGive: '0x0000000000000000000000000000000000000000',
+                amountGive: '100',
+                expires: Math.floor((Date.now() / 1000) + 5000),
+                nonce: 10,
+                user: accounts[0],
+                exchange: exchange.address
+            };
+
+            data = {
+                addresses: [order.tokenGive, order.tokenGet],
+                values: [order.amountGive, order.amountGet, order.expires, order.nonce]
+            }
+        });
+
+        it('should fail to order when vault has not been approved', async () => {
+            try {
+                await exchange.order(data.addresses, data.values, {from: accounts[0]});
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('ordering did not fail');
+        });
+
+        it('should fail to order when user does not have enough balance', async () => {
+            await vault.approve(exchange.address);
+
+            try {
+                await exchange.order(data.addresses, data.values, {from: accounts[0]});
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('ordering did not fail');
+        });
+
+        it('should allow ordering on chain', async () => {
+            await vault.approve(exchange.address);
+            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
+
+            let result = await exchange.order(data.addresses, data.values, {from: accounts[0]});
+
+            let log = result.logs[0].args;
+            assert.equal(accounts[0], log.user);
+            assert.equal(order.tokenGive, log.tokenGive);
+            assert.equal(order.tokenGet, log.tokenGet);
+            assert.equal(order.amountGet, log.amountGet.toString(10));
+            assert.equal(order.amountGive, log.amountGive.toString(10));
+            assert.equal(order.expires, log.expires);
+            assert.equal(order.nonce, log.nonce);
+
+            let hashed = hashOrder(order);
+            assert.equal(await exchange.ordered(accounts[0], hashed.hash), true);
+        });
+
+        it('should not allow duplicate orders', async () => {
+            await vault.approve(exchange.address);
+            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
+
+            await exchange.order(data.addresses, data.values, {from: accounts[0]});
+
+            try {
+                await exchange.order(data.addresses, data.values, {from: accounts[0]});
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('ordering did not fail');
+        });
     });
 
     describe('canTrade', async () => {
@@ -252,6 +351,17 @@ contract('Exchange', function (accounts) {
 });
 
 function signOrder(order) {
+    let hashed = hashOrder(order);
+
+    let sig = web3.eth.sign(order.user, hashed.hash).slice(2);
+    let r = '0x' + sig.substring(0, 64);
+    let s = '0x' + sig.substring(64, 128);
+    let v = parseInt(sig.substring(128, 130), 16) + 27;
+
+    return {addresses: hashed.addresses, values: hashed.values, r: r, s: s, v: v, hash: hashed.hash};
+}
+
+function hashOrder(order) {
     let addresses = [order.user, order.tokenGive, order.tokenGet];
     let values = [order.amountGive, order.amountGet, order.expires, order.nonce];
 
@@ -261,10 +371,5 @@ function signOrder(order) {
 
     let hash = web3Utils.soliditySha3(schema_hash, valuesHash);
 
-    let sig = web3.eth.sign(order.user, hash).slice(2);
-    let r = '0x' + sig.substring(0, 64);
-    let s = '0x' + sig.substring(64, 128);
-    let v = parseInt(sig.substring(128, 130), 16) + 27;
-
-    return {addresses: addresses, values: values, r: r, s: s, v: v, hash: hash};
+    return {hash: hash, addresses: addresses, values: values}
 }

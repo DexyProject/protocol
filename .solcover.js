@@ -6,4 +6,4 @@ module.exports = {
     norpc: true,
     skipFiles: tokens.concat(libFiles).concat(interfaces),
     copyNodeModules: false,
-}
+};
