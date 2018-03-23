@@ -2,35 +2,16 @@ pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
+import "./Libraries/OrderLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
     using SafeMath for *;
+    using OrderLibrary for OrderLibrary.Order;
 
     enum SigMode {TYPED_SIG_EIP, GETH, TREZOR}
-
-    struct Order {
-        address user;
-        address tokenGive;
-        address tokenGet;
-        uint amountGive;
-        uint amountGet;
-        uint expires;
-        uint nonce;
-    }
-
-    bytes32 constant public HASH_SCHEME = keccak256(
-        "address Token Get",
-        "uint Amount Get",
-        "address Token Give",
-        "uint Amount Give",
-        "uint Expires",
-        "uint Nonce",
-        "address User",
-        "address Exchange"
-    );
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
 
@@ -71,10 +52,10 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode) external {
-        Order memory order = createOrder(addresses, values);
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender != order.user);
-        bytes32 hash = orderHash(order);
+        bytes32 hash = order.hash();
 
         require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
         require(canTrade(order, amount, v, r, s, mode, hash));
@@ -96,12 +77,12 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function cancel(address[3] addresses, uint[4] values) external {
-        Order memory order = createOrder(addresses, values);
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender == order.user);
         require(order.amountGive > 0 && order.amountGet > 0);
 
-        bytes32 hash = orderHash(order);
+        bytes32 hash = order.hash();
         require(fills[order.user][hash] < order.amountGet);
         require(!cancelled[hash]);
 
@@ -113,12 +94,12 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function order(address[2] addresses, uint[4] values) external {
-        Order memory order = createOrder([msg.sender, addresses[0], addresses[1]], values);
+        OrderLibrary.Order memory order = OrderLibrary.createOrder([msg.sender, addresses[0], addresses[1]], values);
 
         require(vault.isApproved(order.user, this));
         require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive);
 
-        bytes32 hash = orderHash(order);
+        bytes32 hash = order.hash();
 
         require(!orders[msg.sender][hash]);
         orders[msg.sender][hash] = true;
@@ -148,9 +129,9 @@ contract Exchange is Ownable, ExchangeInterface {
         view
         returns (bool)
     {
-        Order memory order = createOrder(addresses, values);
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
-        bytes32 hash = orderHash(order);
+        bytes32 hash = order.hash();
 
         return canTrade(order, amount, v, r, s, mode, hash);
     }
@@ -215,7 +196,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param order Order to be traded.
     /// @param amount Amount to be traded.
     /// @param hash Hash of the order.
-    function performTrade(Order memory order, uint amount, bytes32 hash) internal {
+    function performTrade(OrderLibrary.Order memory order, uint amount, bytes32 hash) internal {
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
@@ -238,7 +219,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @param hash Hash of the order.
     /// @return Boolean if order can be traded
-    function canTrade(Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
+    function canTrade(OrderLibrary.Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
         internal
         view
         returns (bool)
@@ -268,40 +249,5 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         return fills[order.user][hash].add(amount) <= order.amountGet;
-    }
-
-    /// @dev Hashes the order.
-    /// @param order Order to be hashed.
-    /// @return hash result
-    function orderHash(Order memory order) internal view returns (bytes32) {
-        return keccak256(
-            HASH_SCHEME,
-            keccak256(
-                order.tokenGet,
-                order.amountGet,
-                order.tokenGive,
-                order.amountGive,
-                order.expires,
-                order.nonce,
-                order.user,
-                this
-            )
-        );
-    }
-
-    /// @dev Creates order struct from value arrays.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @return Order struct
-    function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
-        return Order({
-            user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
-            expires: values[2],
-            nonce: values[3]
-        });
     }
 }
