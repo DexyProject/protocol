@@ -48,7 +48,7 @@ contract Vault is Ownable, VaultInterface {
         if (token == ETH) {
             msg.sender.transfer(amount);
         } else if (isERC777[token]) {
-            require(ERC777(token).send(msg.sender, amount));
+            ERC777(token).send(msg.sender, amount);
         } else {
             require(ERC20(token).transfer(msg.sender, amount));
         }
@@ -102,7 +102,7 @@ contract Vault is Ownable, VaultInterface {
         }
 
         if (isERC777[token]) {
-            require(ERC777(token).send(msg.sender, overflow(token)));
+            ERC777(token).send(msg.sender, overflow(token));
             return;
         }
 
