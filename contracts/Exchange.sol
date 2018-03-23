@@ -104,7 +104,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(!orders[msg.sender][hash]);
         orders[msg.sender][hash] = true;
 
-        Ordered(
+        emit Ordered(
             order.user,
             order.tokenGive,
             order.tokenGet,
