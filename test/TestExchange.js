@@ -152,6 +152,24 @@ contract('Exchange', function (accounts) {
             );
         });
 
+        it('should transfer correctly when trade exceeds available balance of user', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive / 2});
+            await vault.approve(exchange.address);
+
+            await token.mint(accounts[1], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await vault.approve(exchange.address, {from: accounts[1]});
+
+            await token.mint(accounts[2], order.amountGet);
+            await vault.approve(exchange.address, {from: accounts[2]});
+            await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
+
+            await exchange.trade(data.addresses, data.values, order.amountGet, data.v, data.r, data.s, 1, {from: accounts[1]});
+
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+        });
+
         it('should trade on chain created order correctly', async () => {
             await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
             await vault.approve(exchange.address);

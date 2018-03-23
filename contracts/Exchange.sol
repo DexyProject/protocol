@@ -198,8 +198,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param hash Hash of the order.
     /// @return Amount that was filled.
     function performTrade(OrderLibrary.Order memory order, uint maxAmount, bytes32 hash) internal returns (uint) {
-        // @todo consider taking vault balance into consideration too.
-        uint amount = SafeMath.min256(maxAmount, order.amountGet.sub(fills[order.user][hash]));
+        uint amount = SafeMath.min256(maxAmount, availableAmount(order, hash));
 
         uint give = order.amountGive.mul(amount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
@@ -236,11 +235,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.amountGet.sub(fills[order.user][hash]) == 0) {
-            return false;
-        }
-
-        if (vault.balanceOf(order.tokenGive, order.user) == 0) {
+        if (availableAmount(order, hash) == 0) {
             return false;
         }
 
@@ -249,5 +244,12 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         return order.expires > now;
+    }
+
+    function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
+        return SafeMath.min256(
+            order.amountGet.sub(fills[order.user][hash]),
+            vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive)
+        );
     }
 }
