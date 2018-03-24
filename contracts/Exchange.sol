@@ -46,12 +46,12 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param amount Amount of the order to be filled.
+    /// @param fillAmount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function trade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function trade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
         external
     {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
@@ -59,17 +59,17 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = order.hash();
 
-        require(vault.balanceOf(order.tokenGet, msg.sender) >= amount);
-        require(canTrade(order, amount, v, r, s, mode, hash));
+        require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
+        require(canTrade(order, fillAmount, v, r, s, mode, hash));
 
-        performTrade(order, amount, hash);
+        performTrade(order, fillAmount, hash);
 
         Traded(
             hash,
             order.tokenGive,
-            order.amountGive * amount / order.amountGet,
+            order.amountGive * fillAmount / order.amountGet,
             order.tokenGet,
-            amount,
+            fillAmount,
             order.user,
             msg.sender
         );
@@ -120,13 +120,13 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param amount Amount of the order to be filled.
+    /// @param fillAmount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function canTrade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
         external
         view
         returns (bool)
@@ -135,7 +135,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         bytes32 hash = order.hash();
 
-        return canTrade(order, amount, v, r, s, mode, hash);
+        return canTrade(order, fillAmount, v, r, s, mode, hash);
     }
 
     /// @dev Returns how much of an order was filled.
@@ -196,32 +196,32 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
-    /// @param amount Amount to be traded.
+    /// @param fillAmount Amount to be traded.
     /// @param hash Hash of the order.
-    function performTrade(OrderLibrary.Order memory order, uint amount, bytes32 hash) internal {
-        uint give = order.amountGive.mul(amount).div(order.amountGet);
+    function performTrade(OrderLibrary.Order memory order, uint fillAmount, bytes32 hash) internal {
+        uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
             vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
         }
 
-        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
+        vault.transfer(order.tokenGet, msg.sender, order.user, fillAmount);
         vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
 
-        fills[order.user][hash] = fills[order.user][hash].add(amount);
+        fills[order.user][hash] = fills[order.user][hash].add(fillAmount);
     }
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
     /// @param order Order to be traded.
-    /// @param amount Desired amount to be traded.
+    /// @param fillAmount Desired amount to be traded.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
     /// @param hash Hash of the order.
     /// @return Boolean if order can be traded
-    function canTrade(OrderLibrary.Order memory order, uint amount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
+    function canTrade(OrderLibrary.Order memory order, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
         internal
         view
         returns (bool)
@@ -238,13 +238,13 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // amount + filled amount will not exceed order amount.
-        if (fills[order.user][hash].add(amount) > order.amountGet) {
+        // fillAmount + filled amount will not exceed order amount.
+        if (fills[order.user][hash].add(fillAmount) > order.amountGet) {
             return false;
         }
 
         // ensure user has enough balance to fill order
-        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < amount) {
+        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < fillAmount) {
             return false;
         }
 
