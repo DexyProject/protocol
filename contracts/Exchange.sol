@@ -145,15 +145,6 @@ contract Exchange is Ownable, ExchangeInterface {
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
     }
-
-    /// @dev Checks if an order was created on chain.
-    /// @param user User who created the order.
-    /// @param hash Hash of the order.
-    /// @return Boolean if the order was created on chain.
-    function isOrdered(address user, bytes32 hash) external view returns (bool) {
-        return orders[user][hash];
-    }
-
     /// @dev Sets the taker fee.
     /// @param _takerFee New taker fee.
     function setFees(uint _takerFee) public onlyOwner {
@@ -170,6 +161,14 @@ contract Exchange is Ownable, ExchangeInterface {
 
     function vault() public view returns (VaultInterface) {
         return vault;
+    }
+
+    /// @dev Checks if an order was created on chain.
+    /// @param user User who created the order.
+    /// @param hash Hash of the order.
+    /// @return Boolean if the order was created on chain.
+    function isOrdered(address user, bytes32 hash) public view returns (bool) {
+        return orders[user][hash];
     }
 
     /// @dev Checks if a given signature was signed by a signer.
@@ -227,7 +226,7 @@ contract Exchange is Ownable, ExchangeInterface {
         returns (bool)
     {
         // ensures order was either created on chain, or signature is valid
-        if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+        if (!isOrdered(order.user, hash) && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
             return false;
         }
 
