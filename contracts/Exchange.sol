@@ -96,7 +96,10 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     function order(address[2] addresses, uint[4] values) external {
-        OrderLibrary.Order memory order = OrderLibrary.createOrder([msg.sender, addresses[0], addresses[1]], values);
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(
+            [msg.sender, addresses[0], addresses[1]],
+            values
+        );
 
         require(vault.isApproved(order.user, this));
         require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive);
