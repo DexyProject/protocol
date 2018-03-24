@@ -145,6 +145,7 @@ contract Exchange is Ownable, ExchangeInterface {
     function filled(address user, bytes32 hash) external view returns (uint) {
         return fills[user][hash];
     }
+
     /// @dev Sets the taker fee.
     /// @param _takerFee New taker fee.
     function setFees(uint _takerFee) public onlyOwner {
