@@ -226,8 +226,7 @@ contract Exchange is Ownable, ExchangeInterface {
         view
         returns (bool)
     {
-        uint filled = fills[order.user][hash];
-        if (filled == 0) {
+        if (fills[order.user][hash] == 0) {
             if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
                 return false;
             }
@@ -237,7 +236,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.amountGet.sub(filled) < amount) {
+        if (order.amountGet.sub(fills[order.user][hash]) < amount) {
             return false;
         }
 
