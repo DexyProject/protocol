@@ -239,12 +239,12 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // ensures that the order still has an available amount to be traded.
-        if (availableAmount(order, hash) == 0) {
+        if (!vault.isApproved(order.user, this)) {
             return false;
         }
 
-        if (!vault.isApproved(order.user, this)) {
+        // ensures that the order still has an available amount to be traded.
+        if (availableAmount(order, hash) == 0) {
             return false;
         }
 
