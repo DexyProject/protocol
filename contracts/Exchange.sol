@@ -150,7 +150,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param user User who created the order.
     /// @param hash Hash of the order.
     /// @return Boolean if the order was created on chain.
-    function ordered(address user, bytes32 hash) external view returns (bool) {
+    function isOrdered(address user, bytes32 hash) external view returns (bool) {
         return orders[user][hash];
     }
 
@@ -226,7 +226,9 @@ contract Exchange is Ownable, ExchangeInterface {
         view
         returns (bool)
     {
+        // if the order has never been traded against, we need to check the sig.
         if (fills[order.user][hash] == 0) {
+            // ensures order was either created on chain, or signature is valid
             if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
                 return false;
             }
@@ -236,10 +238,12 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
+        // ensure order - filled amount is not smaller than the amount user wants.
         if (order.amountGet.sub(fills[order.user][hash]) < amount) {
             return false;
         }
 
+        // ensure user has enough balance to fill order
         if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < amount) {
             return false;
         }
@@ -252,6 +256,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        return fills[order.user][hash].add(amount) <= order.amountGet;
+        // ensure the order does not exceed the amount user wants
+        return fills[order.user][hash].add(amount) < order.amountGet;
     }
 }
