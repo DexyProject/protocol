@@ -226,9 +226,12 @@ contract Exchange is Ownable, ExchangeInterface {
         view
         returns (bool)
     {
-        // ensures order was either created on chain, or signature is valid
-        if (!isOrdered(order.user, hash) && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
-            return false;
+        // if the order has never been traded against, we need to check the sig.
+        if (fills[order.user][hash] == 0) {
+            // ensures order was either created on chain, or signature is valid
+            if (!isOrdered(order.user, hash) && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+                return false;
+            }
         }
 
         if (cancelled[hash]) {
