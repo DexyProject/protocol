@@ -150,7 +150,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param user User who created the order.
     /// @param hash Hash of the order.
     /// @return Boolean if the order was created on chain.
-    function ordered(address user, bytes32 hash) external view returns (bool) {
+    function isOrdered(address user, bytes32 hash) external view returns (bool) {
         return orders[user][hash];
     }
 
