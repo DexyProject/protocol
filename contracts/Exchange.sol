@@ -235,8 +235,8 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // ensure order - filled amount is not smaller than the amount user wants.
-        if (order.amountGet.sub(fills[order.user][hash]) < amount) {
+        // amount + filled amount will not exceed order amount.
+        if (fills[order.user][hash].add(amount) > order.amountGet) {
             return false;
         }
 
@@ -249,11 +249,6 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.expires <= now) {
-            return false;
-        }
-
-        // ensure the order does not exceed the amount user wants
-        return fills[order.user][hash].add(amount) < order.amountGet;
+        return order.expires > now;
     }
 }
