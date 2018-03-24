@@ -251,6 +251,10 @@ contract Exchange is Ownable, ExchangeInterface {
         return order.expires > now;
     }
 
+    /// @dev Returns the maximum available amount that can be taken of an order.
+    /// @param order Order to check.
+    /// @param hash Hash of the order.
+    /// @return Amount of the order that can be taken.
     function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
         return SafeMath.min256(
             order.amountGet.sub(fills[order.user][hash]),
