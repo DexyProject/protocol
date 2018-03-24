@@ -251,7 +251,7 @@ contract('Exchange', function (accounts) {
             assert.equal(order.nonce, log.nonce);
 
             let hashed = hashOrder(order);
-            assert.equal(await exchange.ordered(accounts[0], hashed.hash), true);
+            assert.equal(await exchange.isOrdered(accounts[0], hashed.hash), true);
         });
 
         it('should not allow duplicate orders', async () => {

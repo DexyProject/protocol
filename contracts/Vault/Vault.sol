@@ -71,8 +71,8 @@ contract Vault is Ownable, VaultInterface {
 
     /// @dev Unapproves an exchange to trade balances of the sender.
     /// @param _exchange Address of the exchange to unapprove.
-    function unapprove(address exchange) external {
-        approved[msg.sender][exchange] = false;
+    function unapprove(address _exchange) external {
+        approved[msg.sender][_exchange] = false;
     }
 
     /// @dev Transfers balances of a token between users.
@@ -88,17 +88,17 @@ contract Vault is Ownable, VaultInterface {
 
     /// @dev Returns if an exchange has been approved by a user.
     /// @param user Address of the user.
-    /// @param exchange Address of the exchange.
+    /// @param _exchange Address of the exchange.
     /// @return Boolean whether exchange has been approved.
-    function isApproved(address user, address exchange) external view returns (bool) {
-        return approved[user][exchange];
+    function isApproved(address user, address _exchange) external view returns (bool) {
+        return approved[user][_exchange];
     }
 
     function tokenFallback(address from, uint value, bytes) public {
         depositFor(from, msg.sender, value);
     }
 
-    function tokensReceived(address, address from, address to, uint amount, bytes, bytes) public {
+    function tokensReceived(address, address from, address, uint amount, bytes, bytes) public {
         if (!isERC777[msg.sender]) {
             isERC777[msg.sender] = true;
         }
