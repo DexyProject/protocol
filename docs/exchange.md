@@ -9,24 +9,24 @@ API
 The DEXY exchange implements the interface specified in ExchangeInterface.sol:
 
 
-```
-    function trade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
-        external;
+```Solidity
+function trade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    external;
 
-    function cancel(address[3] addresses, uint[4] values) external;
+function cancel(address[3] addresses, uint[4] values) external;
 
-    function order(address[2] addresses, uint[4] values) external;
+function order(address[2] addresses, uint[4] values) external;
 
-    function canTrade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
-        external
-        view
-        returns (bool);
+function canTrade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    external
+    view
+    returns (bool);
 
-    function filled(address user, bytes32 hash) external view returns (uint);
+function filled(address user, bytes32 hash) external view returns (uint);
 
-    function isOrdered(address user, bytes32 hash) public view returns (bool);
+function isOrdered(address user, bytes32 hash) public view returns (bool);
 
-    function vault() public view returns (VaultInterface);
+function vault() public view returns (VaultInterface);
 ```
 
 Orders and Trades
@@ -36,16 +36,16 @@ The main functions users will interact with will be `order` and `trade`.
 
 Trades are made against orders, and the order struct is defined as follows:
 
-```
-    struct Order {
-        address user;
-        address tokenGive;
-        address tokenGet;
-        uint amountGive;
-        uint amountGet;
-        uint expires;
-        uint nonce;
-    }
+```Solidity
+struct Order {
+    address user;
+    address tokenGive;
+    address tokenGet;
+    uint amountGive;
+    uint amountGet;
+    uint expires;
+    uint nonce;
+}
 ```
 
 From the struct definition above, we see an order includes:
