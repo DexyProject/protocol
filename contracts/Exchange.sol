@@ -46,12 +46,12 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param maxAmount Maximum amount of the order to be filled.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function trade(address[3] addresses, uint[4] values, uint maxAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function trade(address[3] addresses, uint[4] values, uint maxFillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
         external
     {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
@@ -61,14 +61,14 @@ contract Exchange is Ownable, ExchangeInterface {
 
         require(canTrade(order, v, r, s, mode, hash));
 
-        uint amount = performTrade(order, maxAmount, hash);
+        uint filledAmount = performTrade(order, maxFillAmount, hash);
 
         Traded(
             hash,
             order.tokenGive,
-            order.amountGive * amount / order.amountGet,
+            order.amountGive * filledAmount / order.amountGet,
             order.tokenGet,
-            amount,
+            filledAmount,
             order.user,
             msg.sender
         );
@@ -194,24 +194,24 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
-    /// @param maxAmount Maximum amount to be traded.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param hash Hash of the order.
     /// @return Amount that was filled.
-    function performTrade(OrderLibrary.Order memory order, uint maxAmount, bytes32 hash) internal returns (uint) {
-        uint amount = SafeMath.min256(maxAmount, availableAmount(order, hash));
+    function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
+        uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
-        uint give = order.amountGive.mul(amount).div(order.amountGet);
+        uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
             vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
         }
 
-        vault.transfer(order.tokenGet, msg.sender, order.user, amount);
+        vault.transfer(order.tokenGet, msg.sender, order.user, fillAmount);
         vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
 
-        fills[order.user][hash] = fills[order.user][hash].add(amount);
-        return amount;
+        fills[order.user][hash] = fills[order.user][hash].add(fillAmount);
+        return fillAmount;
     }
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
@@ -254,7 +254,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Returns the maximum available amount that can be taken of an order.
     /// @param order Order to check.
     /// @param hash Hash of the order.
-    /// @return Amount of the order that can be taken.
+    /// @return Amount of the order that can be filled.
     function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
         return SafeMath.min256(
             order.amountGet.sub(fills[order.user][hash]),
