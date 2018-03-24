@@ -226,15 +226,18 @@ contract Exchange is Ownable, ExchangeInterface {
         view
         returns (bool)
     {
-        if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
-            return false;
+        uint filled = fills[order.user][hash];
+        if (filled > 0) {
+            if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+                return false;
+            }
         }
 
         if (cancelled[hash]) {
             return false;
         }
 
-        if (order.amountGet.sub(fills[order.user][hash]) < amount) {
+        if (order.amountGet.sub(filled) < amount) {
             return false;
         }
 
