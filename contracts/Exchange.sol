@@ -227,7 +227,7 @@ contract Exchange is Ownable, ExchangeInterface {
         returns (bool)
     {
         uint filled = fills[order.user][hash];
-        if (filled > 0) {
+        if (filled == 0) {
             if (!orders[order.user][hash] && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
                 return false;
             }
