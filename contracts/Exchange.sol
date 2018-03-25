@@ -44,8 +44,8 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     /// @dev Takes an order.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's user, tokenBid and tokenAsk.
+    /// @param values Array of trade's amountBid, amountAsk, expires and nonce.
     /// @param fillAmount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
@@ -59,17 +59,17 @@ contract Exchange is Ownable, ExchangeInterface {
         require(msg.sender != order.user);
         bytes32 hash = order.hash();
 
-        require(order.tokenGive != order.tokenGet);
-        require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
+        require(order.tokenBid != order.tokenAsk);
+        require(vault.balanceOf(order.tokenAsk, msg.sender) >= fillAmount);
         require(canTrade(order, fillAmount, v, r, s, mode, hash));
 
         performTrade(order, fillAmount, hash);
 
         Traded(
             hash,
-            order.tokenGive,
-            order.amountGive * fillAmount / order.amountGet,
-            order.tokenGet,
+            order.tokenBid,
+            order.amountBid * fillAmount / order.amountAsk,
+            order.tokenAsk,
             fillAmount,
             order.user,
             msg.sender
@@ -77,16 +77,16 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     /// @dev Cancels an order.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's user, tokenBid and tokenAsk.
+    /// @param values Array of trade's amountBid, amountAsk, expires and nonce.
     function cancel(address[3] addresses, uint[4] values) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender == order.user);
-        require(order.amountGive > 0 && order.amountGet > 0);
+        require(order.amountBid > 0 && order.amountAsk > 0);
 
         bytes32 hash = order.hash();
-        require(fills[order.user][hash] < order.amountGet);
+        require(fills[order.user][hash] < order.amountAsk);
         require(!cancelled[hash]);
 
         cancelled[hash] = true;
@@ -94,8 +94,8 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     /// @dev Creates an order which is then indexed in the orderbook.
-    /// @param addresses Array of trade's tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's tokenBid and tokenAsk.
+    /// @param values Array of trade's amountBid, amountAsk, expires and nonce.
     function order(address[2] addresses, uint[4] values) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(
             [msg.sender, addresses[0], addresses[1]],
@@ -103,8 +103,8 @@ contract Exchange is Ownable, ExchangeInterface {
         );
 
         require(vault.isApproved(order.user, this));
-        require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive);
-        require(order.tokenGive != order.tokenGet);
+        require(vault.balanceOf(order.tokenBid, order.user) >= order.amountBid);
+        require(order.tokenBid != order.tokenAsk);
 
         bytes32 hash = order.hash();
 
@@ -113,18 +113,18 @@ contract Exchange is Ownable, ExchangeInterface {
 
         Ordered(
             order.user,
-            order.tokenGive,
-            order.tokenGet,
-            order.amountGive,
-            order.amountGet,
+            order.tokenBid,
+            order.tokenAsk,
+            order.amountBid,
+            order.amountAsk,
             order.expires,
             order.nonce
         );
     }
 
     /// @dev Checks if a order can be traded.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's user, tokenBid and tokenAsk.
+    /// @param values Array of trade's amountBid, amountAsk, expires and nonce.
     /// @param fillAmount Amount of the order to be filled.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
@@ -204,15 +204,15 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param fillAmount Amount to be traded.
     /// @param hash Hash of the order.
     function performTrade(OrderLibrary.Order memory order, uint fillAmount, bytes32 hash) internal {
-        uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
+        uint give = order.amountBid.mul(fillAmount).div(order.amountAsk);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
-            vault.transfer(order.tokenGive, order.user, feeAccount, tradeTakerFee);
+            vault.transfer(order.tokenBid, order.user, feeAccount, tradeTakerFee);
         }
 
-        vault.transfer(order.tokenGet, msg.sender, order.user, fillAmount);
-        vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
+        vault.transfer(order.tokenAsk, msg.sender, order.user, fillAmount);
+        vault.transfer(order.tokenBid, order.user, msg.sender, give.sub(tradeTakerFee));
 
         fills[order.user][hash] = fills[order.user][hash].add(fillAmount);
     }
@@ -244,12 +244,12 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         // fillAmount + filled amount will not exceed order amount.
-        if (fills[order.user][hash].add(fillAmount) > order.amountGet) {
+        if (fills[order.user][hash].add(fillAmount) > order.amountAsk) {
             return false;
         }
 
         // ensure user has enough balance to fill order
-        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < fillAmount) {
+        if (vault.balanceOf(order.tokenBid, order.user).mul(order.amountAsk).div(order.amountBid) < fillAmount) {
             return false;
         }
 

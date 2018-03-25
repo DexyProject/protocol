@@ -8,20 +8,20 @@ interface ExchangeInterface {
 
     event Traded(
         bytes32 indexed hash,
-        address tokenGive,
-        uint amountGive,
-        address tokenGet,
-        uint amountGet,
+        address tokenBid,
+        uint amountBid,
+        address tokenAsk,
+        uint amountAsk,
         address maker,
         address taker
     );
 
     event Ordered(
         address user,
-        address tokenGive,
-        address tokenGet,
-        uint amountGive,
-        uint amountGet,
+        address tokenBid,
+        address tokenAsk,
+        uint amountBid,
+        uint amountAsk,
         uint expires,
         uint nonce
     );
