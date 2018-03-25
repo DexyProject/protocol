@@ -2,6 +2,7 @@ pragma solidity ^0.4.18;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
+import "./Libraries/SignatureValidator.sol";
 import "./Libraries/OrderLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
@@ -47,13 +48,8 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param fillAmount Amount of the order to be filled.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    function trade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
-        external
-    {
+    /// @param signature Signed order along with signature mode.
+    function trade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender != order.user);
@@ -61,7 +57,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         require(order.tokenGive != order.tokenGet);
         require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
-        require(canTrade(order, fillAmount, v, r, s, mode, hash));
+        require(canTrade(order, fillAmount, signature, hash));
 
         performTrade(order, fillAmount, hash);
 
@@ -126,12 +122,9 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
     /// @param fillAmount Amount of the order to be filled.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    /// @param signature Signed order along with signature mode.
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function canTrade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature)
         external
         view
         returns (bool)
@@ -140,7 +133,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         bytes32 hash = order.hash();
 
-        return canTrade(order, fillAmount, v, r, s, mode, hash);
+        return canTrade(order, fillAmount, signature, hash);
     }
 
     /// @dev Returns how much of an order was filled.
@@ -177,28 +170,6 @@ contract Exchange is Ownable, ExchangeInterface {
         return orders[user][hash];
     }
 
-    /// @dev Checks if a given signature was signed by a signer.
-    /// @param signer Address of the signer.
-    /// @param hash Hash which was signed.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
-    /// @return Boolean if the hash was signed by the signer.
-    function isValidSignature(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s, SigMode mode)
-        public
-        pure
-        returns (bool)
-    {
-        if (mode == SigMode.GETH) {
-            hash = keccak256("\x19Ethereum Signed Message:\n32", hash);
-        } else if (mode == SigMode.TREZOR) {
-            hash = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
-        }
-
-        return ecrecover(hash, v, r, s) == signer;
-    }
-
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
     /// @param fillAmount Amount to be traded.
@@ -220,13 +191,10 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Indicates whether or not an certain amount of an order can be traded.
     /// @param order Order to be traded.
     /// @param fillAmount Desired amount to be traded.
-    /// @param v ECDSA signature parameter v.
-    /// @param r ECDSA signature parameters r.
-    /// @param s ECDSA signature parameters s.
-    /// @param mode Signature mode used. (0 = Typed Signature, 1 = Geth standard, 2 = Trezor)
+    /// @param signature Signed order along with signature mode.
     /// @param hash Hash of the order.
     /// @return Boolean if order can be traded
-    function canTrade(OrderLibrary.Order memory order, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode, bytes32 hash)
+    function canTrade(OrderLibrary.Order memory order, uint fillAmount, bytes signature, bytes32 hash)
         internal
         view
         returns (bool)
@@ -234,7 +202,7 @@ contract Exchange is Ownable, ExchangeInterface {
         // if the order has never been traded against, we need to check the sig.
         if (fills[order.user][hash] == 0) {
             // ensures order was either created on chain, or signature is valid
-            if (!isOrdered(order.user, hash) && !isValidSignature(order.user, hash, v, r, s, SigMode(mode))) {
+            if (!isOrdered(order.user, hash) && !SignatureValidator.isValidSignature(hash, order.user, signature)) {
                 return false;
             }
         }
