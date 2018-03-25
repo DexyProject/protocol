@@ -15,10 +15,10 @@ library OrderLibrary {
 
     struct Order {
         address user;
-        address tokenGive;
-        address tokenGet;
-        uint amountGive;
-        uint amountGet;
+        address tokenBid;
+        address tokenAsk;
+        uint amountBid;
+        uint amountAsk;
         uint expires;
         uint nonce;
     }
@@ -30,10 +30,10 @@ library OrderLibrary {
         return keccak256(
             HASH_SCHEME,
             keccak256(
-                order.tokenGet,
-                order.amountGet,
-                order.tokenGive,
-                order.amountGive,
+                order.tokenAsk,
+                order.amountAsk,
+                order.tokenBid,
+                order.amountBid,
                 order.expires,
                 order.nonce,
                 order.user,
@@ -43,16 +43,16 @@ library OrderLibrary {
     }
 
     /// @dev Creates order struct from value arrays.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's user, tokenBid and tokenAsk.
+    /// @param values Array of trade's amountBid, amountAsk, expires and nonce.
     /// @return Order struct
     function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
         return Order({
             user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
+            tokenBid: addresses[1],
+            tokenAsk: addresses[2],
+            amountBid: values[0],
+            amountAsk: values[1],
             expires: values[2],
             nonce: values[3]
         });
