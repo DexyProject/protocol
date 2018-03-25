@@ -6,18 +6,17 @@ DEXY is a decentralized exchange backed by smart contracts.
 API
 ===
 
-The DEXY exchange implements the interface specified in ExchangeInterface.sol:
+The DEXY exchange implements the interface specified in [ExchangeInterface.sol](/contracts/ExchangeInterface.sol):
 
 
 ```Solidity
-function trade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
-    external;
+function trade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature) external;
 
 function cancel(address[3] addresses, uint[4] values) external;
 
 function order(address[2] addresses, uint[4] values) external;
 
-function canTrade(address[3] addresses, uint[4] values, uint fillAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+function canTrade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature)
     external
     view
     returns (bool);
