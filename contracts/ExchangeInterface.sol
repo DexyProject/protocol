@@ -26,14 +26,13 @@ interface ExchangeInterface {
         uint nonce
     );
 
-    function trade(address[3] addresses, uint[4] values, uint maxAmount, uint8 v, bytes32 r, bytes32 s, uint8 mode)
-        external;
+    function trade(address[3] addresses, uint[4] values, uint maxFillAmount, bytes signature) external;
 
     function cancel(address[3] addresses, uint[4] values) external;
 
     function order(address[2] addresses, uint[4] values) external;
 
-    function canTrade(address[3] addresses, uint[4] values, uint8 v, bytes32 r, bytes32 s, uint8 mode)
+    function canTrade(address[3] addresses, uint[4] values, bytes signature)
         external
         view
         returns (bool);
