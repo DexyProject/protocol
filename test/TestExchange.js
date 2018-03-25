@@ -274,6 +274,41 @@ contract('Exchange', function (accounts) {
         });
     });
 
+    describe('availableAmount', async () => {
+        let order;
+        let data;
+
+        beforeEach(async () => {
+
+            order = {
+                tokenGet: '0xdead',
+                amountGet: '10',
+                tokenGive: '0x0000000000000000000000000000000000000000',
+                amountGive: '100',
+                expires: Math.floor((Date.now() / 1000) + 5000),
+                nonce: 10,
+                user: accounts[0],
+                exchange: exchange.address
+            };
+
+            data = {
+                addresses: [order.user, order.tokenGive, order.tokenGet],
+                values: [order.amountGive, order.amountGet, order.expires, order.nonce]
+            }
+        });
+
+        it('should return user balance if it is smaller than order amount', async () => {
+            await vault.deposit(0x0, order.amountGive / 2, {from: accounts[0], value: order.amountGive / 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet / 2);
+        });
+
+        it('should return order balance if it is smaller than user balance', async () => {
+            await vault.deposit(0x0, order.amountGive * 2, {from: accounts[0], value: order.amountGive * 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet);
+        });
+
+    });
+
     describe('canTrade', async () => {
 
         let token;
