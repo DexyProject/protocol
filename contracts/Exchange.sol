@@ -134,6 +134,15 @@ contract Exchange is Ownable, ExchangeInterface {
         return canTrade(order, signature, hash);
     }
 
+    /// @dev Checks how much of an order can be filled.
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @return Amount of the order which can be filled.
+    function availableAmount(address[3] addresses, uint[4] values) external view returns (uint) {
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
+        return availableAmount(order, order.hash());
+    }
+
     /// @dev Returns how much of an order was filled.
     /// @param user User who created the order.
     /// @param hash Hash of the order.
