@@ -355,12 +355,11 @@ function signOrder(order) {
     let hashed = hashOrder(order);
 
     let sig = web3.eth.sign(order.user, hashed.hash).slice(2);
+
     let r = ethutil.toBuffer('0x' + sig.substring(0, 64));
     let s = ethutil.toBuffer('0x' + sig.substring(64, 128));
-    let v = parseInt(sig.substring(128, 130), 16) + 27;
-
+    let v = ethutil.toBuffer(parseInt(sig.substring(128, 130), 16) + 27);
     let mode = ethutil.toBuffer(1);
-    v = ethutil.toBuffer(v);
 
     let signature = '0x' + Buffer.concat([mode, v, r, s]).toString('hex');
 
