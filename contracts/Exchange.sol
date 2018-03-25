@@ -12,8 +12,6 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
 
-    enum SigMode {TYPED_SIG_EIP, GETH, TREZOR}
-
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
 
     VaultInterface public vault;

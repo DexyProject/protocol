@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 library SignatureValidator {
 
     enum SignatureMode {
-        TYPED_SIG_EIP,
+        EIP712,
         GETH,
         TREZOR
     }
