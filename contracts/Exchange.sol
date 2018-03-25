@@ -99,6 +99,8 @@ contract Exchange is Ownable, ExchangeInterface {
         require(vault.isApproved(order.user, this));
         require(vault.balanceOf(order.tokenGive, order.user) >= order.amountGive);
         require(order.tokenGive != order.tokenGet);
+        require(order.amountGive > 0);
+        require(order.amountGet > 0);
 
         bytes32 hash = order.hash();
 
@@ -206,6 +208,14 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         if (cancelled[hash]) {
+            return false;
+        }
+
+        if (order.amountGet == 0) {
+            return false;
+        }
+
+        if (order.amountGive == 0) {
             return false;
         }
 
