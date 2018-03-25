@@ -237,7 +237,7 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // ensures that the order still has an available amount to be traded.
+        // ensures that the order still has an available amount to be filled.
         if (availableAmount(order, hash) == 0) {
             return false;
         }
