@@ -6,7 +6,7 @@ DEXY is a decentralized exchange backed by smart contracts.
 API
 ===
 
-The DEXY exchange implements the interface specified in ExchangeInterface.sol:
+The DEXY exchange implements the interface specified in [ExchangeInterface.sol](/contracts/ExchangeInterface.sol):
 
 
 ```Solidity
