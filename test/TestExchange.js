@@ -103,6 +103,9 @@ contract('Exchange', function (accounts) {
         });
 
         it('should not allow user to trade order without enough balance', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.approve(exchange.address);
+
             try {
                 await exchange.trade(data.addresses, data.values, 10, data.sig, {from: accounts[1]});
             } catch (error) {

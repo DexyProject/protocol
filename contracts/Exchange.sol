@@ -176,6 +176,8 @@ contract Exchange is Ownable, ExchangeInterface {
     function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
+        require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
+
         uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
