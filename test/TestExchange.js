@@ -103,6 +103,9 @@ contract('Exchange', function (accounts) {
         });
 
         it('should not allow user to trade order without enough balance', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.approve(exchange.address);
+
             try {
                 await exchange.trade(data.addresses, data.values, 10, data.sig, {from: accounts[1]});
             } catch (error) {
@@ -122,8 +125,53 @@ contract('Exchange', function (accounts) {
 
             await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
 
-            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+        });
+
+        it('should transfer correctly when trade exceeds available amount on trade', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.approve(exchange.address);
+
+            await token.mint(accounts[1], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await vault.approve(exchange.address, {from: accounts[1]});
+
+            await token.mint(accounts[2], order.amountGet);
+            await vault.approve(exchange.address, {from: accounts[2]});
+            await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
+
+            await exchange.trade(data.addresses, data.values, order.amountGet / 2, data.sig, {from: accounts[1]});
+
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+
+            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[2]});
+
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet);
+            assert.equal(
+                (await vault.balanceOf(order.tokenGive, accounts[2])).toString(),
+                (order.amountGive / 2) - 1250000000000000
+            );
+        });
+
+        it('should transfer correctly when trade exceeds available balance of user', async () => {
+            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive / 2});
+            await vault.approve(exchange.address);
+
+            await token.mint(accounts[1], order.amountGet);
+            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await vault.approve(exchange.address, {from: accounts[1]});
+
+            await token.mint(accounts[2], order.amountGet);
+            await vault.approve(exchange.address, {from: accounts[2]});
+            await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
+
+            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
+
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
         });
 
         it('should trade on chain created order correctly', async () => {
@@ -138,7 +186,7 @@ contract('Exchange', function (accounts) {
 
             await exchange.trade(data.addresses, data.values, order.amountGet, '0x0', {from: accounts[1]});
 
-            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), order.amountGive * (0.25 / 100));
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
     });
@@ -226,6 +274,41 @@ contract('Exchange', function (accounts) {
         });
     });
 
+    describe('availableAmount', async () => {
+        let order;
+        let data;
+
+        beforeEach(async () => {
+
+            order = {
+                tokenGet: '0xdead',
+                amountGet: '10',
+                tokenGive: '0x0000000000000000000000000000000000000000',
+                amountGive: '100',
+                expires: Math.floor((Date.now() / 1000) + 5000),
+                nonce: 10,
+                user: accounts[0],
+                exchange: exchange.address
+            };
+
+            data = {
+                addresses: [order.user, order.tokenGive, order.tokenGet],
+                values: [order.amountGive, order.amountGet, order.expires, order.nonce]
+            }
+        });
+
+        it('should return user balance if it is smaller than order amount', async () => {
+            await vault.deposit(0x0, order.amountGive / 2, {from: accounts[0], value: order.amountGive / 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet / 2);
+        });
+
+        it('should return order balance if it is smaller than user balance', async () => {
+            await vault.deposit(0x0, order.amountGive * 2, {from: accounts[0], value: order.amountGive * 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet);
+        });
+
+    });
+
     describe('canTrade', async () => {
 
         let token;
@@ -252,28 +335,19 @@ contract('Exchange', function (accounts) {
 
         it('should return false when order is signed by different user', async () => {
             data.addresses[0] = accounts[1];
-            assert.equal(await exchange.canTrade(data.addresses, data.values, 10, data.sig), false);
+            assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
 
         it('should return false when order is cancelled', async () => {
             await exchange.cancel(data.addresses, data.values);
-            assert.equal(await exchange.canTrade(data.addresses, data.values, 10, data.sig), false);
-        });
-
-        it('should return false when users do not have enough funds', async () => {
-            assert.equal(await exchange.canTrade(data.addresses, data.values, 10, data.sig), false);
+            assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
 
         it('should return false when vault has not been approved', async () => {
             await token.mint(accounts[0], order.amountGet);
             await vault.deposit(token.address, order.amountGet, {from: accounts[0]});
 
-            assert.equal(await exchange.canTrade(data.addresses, data.values, 10, data.sig), false);
-        });
-
-        it('should return false when vault has not been approved', async () => {
-            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
-            assert.equal(await exchange.canTrade(data.addresses, data.values, order.amountGet, data.sig), false);
+            assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
 
         it('should return false when order has been expired', async () => {
@@ -293,10 +367,10 @@ contract('Exchange', function (accounts) {
             await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
             await vault.approve(exchange.address);
 
-            assert.equal(await exchange.canTrade(data.addresses, data.values, 1, data.sig), false);
+            assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
 
-        it('should return false when order get amount is too large', async () => {
+        it('should return false when order has filled', async () => {
             order = {
                 tokenGet: token.address,
                 amountGet: '10',
@@ -317,9 +391,8 @@ contract('Exchange', function (accounts) {
             await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet / 2, data.sig, {from: accounts[1]});
-
-            assert.equal(await exchange.canTrade(data.addresses, data.values, order.amountGet, data.sig), false);
+            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
+            assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
     });
 
