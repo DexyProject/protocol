@@ -26,12 +26,7 @@ interface ExchangeInterface {
         uint nonce
     );
 
-<<<<<<< HEAD
-    function trade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature) external;
-=======
     function trade(address[3] addresses, uint[4] values, uint maxFillAmount, bytes signature) external;
-
->>>>>>> f5f2e55795836cc896c4a44fb8bf0285289ea3c5
     function cancel(address[3] addresses, uint[4] values) external;
     function order(address[2] addresses, uint[4] values) external;
 
@@ -41,7 +36,6 @@ interface ExchangeInterface {
         returns (bool);
 
     function availableAmount(address[3] addresses, uint[4] values) external view returns (uint);
-
     function filled(address user, bytes32 hash) external view returns (uint);
     function isOrdered(address user, bytes32 hash) public view returns (bool);
     function vault() public view returns (VaultInterface);
