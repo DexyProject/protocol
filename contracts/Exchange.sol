@@ -45,26 +45,25 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param fillAmount Amount of the order to be filled.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param signature Signed order along with signature mode.
-    function trade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature) external {
+    function trade(address[3] addresses, uint[4] values, uint maxFillAmount, bytes signature) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender != order.user);
         bytes32 hash = order.hash();
 
         require(order.tokenGive != order.tokenGet);
-        require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
-        require(canTrade(order, fillAmount, signature, hash));
+        require(canTrade(order, signature, hash));
 
-        performTrade(order, fillAmount, hash);
+        uint filledAmount = performTrade(order, maxFillAmount, hash);
 
         Traded(
             hash,
             order.tokenGive,
-            order.amountGive * fillAmount / order.amountGet,
+            order.amountGive * filledAmount / order.amountGet,
             order.tokenGet,
-            fillAmount,
+            filledAmount,
             order.user,
             msg.sender
         );
@@ -121,10 +120,9 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param fillAmount Amount of the order to be filled.
     /// @param signature Signed order along with signature mode.
     /// @return Boolean if order can be traded
-    function canTrade(address[3] addresses, uint[4] values, uint fillAmount, bytes signature)
+    function canTrade(address[3] addresses, uint[4] values, bytes signature)
         external
         view
         returns (bool)
@@ -133,7 +131,16 @@ contract Exchange is Ownable, ExchangeInterface {
 
         bytes32 hash = order.hash();
 
-        return canTrade(order, fillAmount, signature, hash);
+        return canTrade(order, signature, hash);
+    }
+
+    /// @dev Checks how much of an order can be filled.
+    /// @param addresses Array of trade's user, tokenGive and tokenGet.
+    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @return Amount of the order which can be filled.
+    function availableAmount(address[3] addresses, uint[4] values) external view returns (uint) {
+        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
+        return availableAmount(order, order.hash());
     }
 
     /// @dev Returns how much of an order was filled.
@@ -172,9 +179,14 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
-    /// @param fillAmount Amount to be traded.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param hash Hash of the order.
-    function performTrade(OrderLibrary.Order memory order, uint fillAmount, bytes32 hash) internal {
+    /// @return Amount that was filled.
+    function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
+        uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
+
+        require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
+
         uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
@@ -186,15 +198,17 @@ contract Exchange is Ownable, ExchangeInterface {
         vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
 
         fills[order.user][hash] = fills[order.user][hash].add(fillAmount);
+        assert(fills[order.user][hash] <= order.amountGet);
+
+        return fillAmount;
     }
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
     /// @param order Order to be traded.
-    /// @param fillAmount Desired amount to be traded.
     /// @param signature Signed order along with signature mode.
     /// @param hash Hash of the order.
     /// @return Boolean if order can be traded
-    function canTrade(OrderLibrary.Order memory order, uint fillAmount, bytes signature, bytes32 hash)
+    function canTrade(OrderLibrary.Order memory order, bytes signature, bytes32 hash)
         internal
         view
         returns (bool)
@@ -211,6 +225,10 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
+        if (!vault.isApproved(order.user, this)) {
+            return false;
+        }
+
         if (order.amountGet == 0) {
             return false;
         }
@@ -219,20 +237,22 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        // fillAmount + filled amount will not exceed order amount.
-        if (fills[order.user][hash].add(fillAmount) > order.amountGet) {
-            return false;
-        }
-
-        // ensure user has enough balance to fill order
-        if (vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive) < fillAmount) {
-            return false;
-        }
-
-        if (!vault.isApproved(order.user, this)) {
+        // ensures that the order still has an available amount to be filled.
+        if (availableAmount(order, hash) == 0) {
             return false;
         }
 
         return order.expires > now;
+    }
+
+    /// @dev Returns the maximum available amount that can be taken of an order.
+    /// @param order Order to check.
+    /// @param hash Hash of the order.
+    /// @return Amount of the order that can be filled.
+    function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
+        return SafeMath.min256(
+            order.amountGet.sub(fills[order.user][hash]),
+            vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive)
+        );
     }
 }
