@@ -1,0 +1,8 @@
+{
+  "extends": "default",
+  "rules": {
+    "indent": ["warn", 4],
+    "two-lines-top-level-separator": false,
+    "compiler-fixed": false
+  }
+}

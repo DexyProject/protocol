@@ -8,7 +8,7 @@ interface VaultInterface {
     function deposit(address token, uint amount) external payable;
     function withdraw(address token, uint amount) external;
     function transfer(address token, address from, address to, uint amount) external;
-    function approve(address _exchange) external;
+    function approve(address exchange) external;
     function unapprove(address exchange) external;
     function isApproved(address user, address exchange) external view returns (bool);
     function tokenFallback(address from, uint value, bytes data) public;
