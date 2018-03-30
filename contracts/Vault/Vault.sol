@@ -154,7 +154,7 @@ contract Vault is Ownable, VaultInterface {
     /// @return Amount of tokens not accounted for.
     function overflow(address token) internal view returns (uint) {
         if (token == ETH) {
-            return this.balance.sub(accounted[token]);
+            return address(this).balance.sub(accounted[token]);
         }
 
         return ERC20(token).balanceOf(this).sub(accounted[token]);
