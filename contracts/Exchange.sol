@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
@@ -58,7 +58,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         uint filledAmount = performTrade(order, maxFillAmount, hash);
 
-        Traded(
+        emit Traded(
             hash,
             order.tokenGive,
             order.amountGive * filledAmount / order.amountGet,
@@ -83,7 +83,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(!cancelled[hash]);
 
         cancelled[hash] = true;
-        Cancelled(hash);
+        emit Cancelled(hash);
     }
 
     /// @dev Creates an order which is then indexed in the orderbook.
@@ -106,7 +106,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(!orders[msg.sender][hash]);
         orders[msg.sender][hash] = true;
 
-        Ordered(
+        emit Ordered(
             order.user,
             order.tokenGive,
             order.tokenGet,

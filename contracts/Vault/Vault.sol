@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "./VaultInterface.sol";
 import "../Libraries/SafeMath.sol";
@@ -59,7 +59,7 @@ contract Vault is Ownable, VaultInterface {
             require(ERC20(token).transfer(msg.sender, amount));
         }
 
-        Withdrawn(msg.sender, token, amount);
+        emit Withdrawn(msg.sender, token, amount);
     }
 
     /// @dev Approves an exchange to trade balances of the sender.
@@ -154,7 +154,7 @@ contract Vault is Ownable, VaultInterface {
     /// @return Amount of tokens not accounted for.
     function overflow(address token) internal view returns (uint) {
         if (token == ETH) {
-            return this.balance.sub(accounted[token]);
+            return address(this).balance.sub(accounted[token]);
         }
 
         return ERC20(token).balanceOf(this).sub(accounted[token]);
@@ -167,6 +167,6 @@ contract Vault is Ownable, VaultInterface {
     function depositFor(address user, address token, uint amount) private {
         balances[token][user] = balances[token][user].add(amount);
         accounted[token] = accounted[token].add(amount);
-        Deposited(user, token, amount);
+        emit Deposited(user, token, amount);
     }
 }
