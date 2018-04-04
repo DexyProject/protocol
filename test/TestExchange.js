@@ -94,7 +94,7 @@ contract('Exchange', function (accounts) {
 
         it('should not allow user to trade own order', async () => {
             try {
-                await exchange.trade(data.addresses, data.values, 10, data.sig, {from: accounts[0]});
+                await exchange.trade(data.addresses, data.values, data.sig, 10, {from: accounts[0]});
             } catch (error) {
                 return utils.ensureException(error);
             }
@@ -107,7 +107,7 @@ contract('Exchange', function (accounts) {
             await vault.approve(exchange.address);
 
             try {
-                await exchange.trade(data.addresses, data.values, 10, data.sig, {from: accounts[1]});
+                await exchange.trade(data.addresses, data.values, data.sig, 10, {from: accounts[1]});
             } catch (error) {
                 return utils.ensureException(error);
             }
@@ -123,7 +123,7 @@ contract('Exchange', function (accounts) {
             await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
@@ -141,12 +141,12 @@ contract('Exchange', function (accounts) {
             await vault.approve(exchange.address, {from: accounts[2]});
             await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet / 2, data.sig, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet / 2, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
 
-            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[2]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[2]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet);
@@ -168,7 +168,7 @@ contract('Exchange', function (accounts) {
             await vault.approve(exchange.address, {from: accounts[2]});
             await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
@@ -184,7 +184,7 @@ contract('Exchange', function (accounts) {
             await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet, '0x0', {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, '0x0', order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), order.amountGive * (0.25 / 100));
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
@@ -391,7 +391,7 @@ contract('Exchange', function (accounts) {
             await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, order.amountGet, data.sig, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
             assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
     });
