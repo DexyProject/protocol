@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [unreleased]
 
-## [1.0.0]
+## [1.0.0] - 2018-04-03
 
 ### Added
  - Truffle configuration files
