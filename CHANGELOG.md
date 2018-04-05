@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [unreleased]
 
+## [1.0.0]
+
 ### Added
  - Truffle configuration files
  - package.json
  - Solium files
  - Travis configuration
+ - Base exchange contracts
