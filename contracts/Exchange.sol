@@ -188,6 +188,8 @@ contract Exchange is Ownable, ExchangeInterface {
         require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
 
         uint give = order.amountGive.mul(fillAmount).div(order.amountGet);
+        require(give > 0);
+
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
