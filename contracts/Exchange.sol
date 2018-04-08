@@ -45,9 +45,9 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @dev Takes an order.
     /// @param addresses Array of trade's user, tokenGive and tokenGet.
     /// @param values Array of trade's amountGive, amountGet, expires and nonce.
-    /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param signature Signed order along with signature mode.
-    function trade(address[3] addresses, uint[4] values, uint maxFillAmount, bytes signature) external {
+    /// @param maxFillAmount Maximum amount of the order to be filled.
+    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender != order.user);
