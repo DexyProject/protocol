@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [unreleased]
 
-## [1.0.1] - 2018-04-07
-
 ### Fixed
  - Invariant with small denominations that may end with 0 value transfers. 
 
