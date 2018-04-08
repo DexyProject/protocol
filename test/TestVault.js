@@ -125,4 +125,14 @@ contract('Vault', function (accounts) {
         await vault.transfer(token.address, accounts[0], accounts[1], sum, {from: exchange});
         assert.equal(await vault.balanceOf.call(token.address, accounts[1]), sum);
     });
+
+    it('should allow adding and removing spender', async () => {
+        let exchange = accounts[2];
+
+        await vault.addSpender(exchange);
+        assert.equal(true, await vault.isSpender(exchange));
+
+        await vault.removeSpender(exchange);
+        assert.equal(false, await vault.isSpender(exchange));
+    });
 });
