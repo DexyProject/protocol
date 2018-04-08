@@ -26,7 +26,7 @@ interface ExchangeInterface {
         uint nonce
     );
 
-    function trade(address[3] addresses, uint[4] values, uint maxFillAmount, bytes signature) external;
+    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external;
     function cancel(address[3] addresses, uint[4] values) external;
     function order(address[2] addresses, uint[4] values) external;
 
