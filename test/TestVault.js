@@ -99,7 +99,7 @@ contract('Vault', function (accounts) {
     });
 
     it('should allow a user to approve and unapprove an exchange', async () => {
-        await vault.setExchange(accounts[1]);
+        await vault.addSpender(accounts[1]);
 
         assert.equal(await vault.isApproved(accounts[0], accounts[1]), false);
 
@@ -113,7 +113,7 @@ contract('Vault', function (accounts) {
     it('should allow funds to be transferred', async () => {
         let exchange = accounts[2];
 
-        await vault.setExchange(exchange);
+        await vault.addSpender(exchange);
         await vault.approve(exchange, {from: accounts[0]});
 
         let sum = 30;
