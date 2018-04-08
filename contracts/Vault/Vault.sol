@@ -71,12 +71,14 @@ contract Vault is Ownable, VaultInterface {
     function approve(address spender) external {
         require(spenders[spender]);
         approved[msg.sender][spender] = true;
+        emit Approved(msg.sender, spender);
     }
 
     /// @dev Unapproves an spender to trade balances of the sender.
     /// @param spender Address of the spender to unapprove.
     function unapprove(address spender) external {
         approved[msg.sender][spender] = false;
+        emit Unapproved(msg.sender, spender);
     }
 
     /// @dev Adds a spender.
@@ -84,12 +86,14 @@ contract Vault is Ownable, VaultInterface {
     function addSpender(address spender) external onlyOwner {
         require(spender != 0x0);
         spenders[spender] = true;
+        emit AddedSpender(spender);
     }
 
     /// @dev Removes a spender.
     /// @param spender Address of the spender.
     function removeSpender(address spender) external onlyOwner {
         spenders[spender] = false;
+        emit RemovedSpender(spender);
     }
 
     /// @dev Transfers balances of a token between users.
