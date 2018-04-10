@@ -131,6 +131,7 @@ contract('Vault', function (accounts) {
 
         await vault.addSpender(exchange);
         assert.equal(true, await vault.isSpender(exchange));
+        assert.equal(exchange, await vault.latestSpender());
 
         await vault.removeSpender(exchange);
         assert.equal(false, await vault.isSpender(exchange));

@@ -19,6 +19,7 @@ interface VaultInterface {
     function isApproved(address user, address exchange) external view returns (bool);
     function addSpender(address spender) external;
     function removeSpender(address spender) external;
+    function latestSpender() external view returns (address);
     function isSpender(address spender) external view returns (bool);
     function tokenFallback(address from, uint value, bytes data) public;
     function balanceOf(address token, address user) public view returns (uint);

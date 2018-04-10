@@ -20,6 +20,8 @@ contract Vault is Ownable, VaultInterface {
     mapping (address => uint) private accounted;
     mapping (address => bool) private spenders;
 
+    address private latest;
+
     modifier onlySpender {
         require(spenders[msg.sender]);
         _;
@@ -86,6 +88,7 @@ contract Vault is Ownable, VaultInterface {
     function addSpender(address spender) external onlyOwner {
         require(spender != 0x0);
         spenders[spender] = true;
+        latest = spender;
         emit AddedSpender(spender);
     }
 
@@ -120,6 +123,10 @@ contract Vault is Ownable, VaultInterface {
     /// @return Boolean whether spender has been approved.
     function isSpender(address spender) external view returns (bool) {
         return spenders[spender];
+    }
+
+    function latestSpender() external view returns (address) {
+        return latest;
     }
 
     function tokenFallback(address from, uint value, bytes) public {
