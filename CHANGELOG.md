@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
  - Rearrange parameter ordering for trade function.
+ 
+### Fixed
+ - Checks for rounding errors
 
 ## [1.0.0] - 2018-04-03
 
