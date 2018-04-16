@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
  - Rearrange parameter ordering for trade function.
 
+### Fixed
+ - Invariant with small denominations that may end with 0 value transfers. 
+
 ## [1.0.0] - 2018-04-03
 
 ### Added
