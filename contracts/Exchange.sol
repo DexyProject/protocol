@@ -13,6 +13,7 @@ contract Exchange is Ownable, ExchangeInterface {
     using OrderLibrary for OrderLibrary.Order;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
+    uint256 constant private MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
 
     VaultInterface public vault;
 
@@ -185,6 +186,7 @@ contract Exchange is Ownable, ExchangeInterface {
     function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
+        require(roundingPercent(fillAmount, order.makerGet, order.takerGet) <= MAX_ROUNDING_PERCENTAGE);
         require(vault.balanceOf(order.takerToken, msg.sender) >= fillAmount);
 
         uint give = order.takerGet.mul(fillAmount).div(order.makerGet);
@@ -254,5 +256,20 @@ contract Exchange is Ownable, ExchangeInterface {
             order.makerGet.sub(fills[order.user][hash]),
             vault.balanceOf(order.makerToken, order.user).mul(order.makerGet).div(order.takerGet)
         );
+    }
+
+    /// @dev Returns the percentage which was rounded when dividing.
+    /// @param numerator Numerator.
+    /// @param denominator Denominator.
+    /// @param target Value to multiply with.
+    /// @return Percentage rounded.
+    function roundingPercent(uint numerator, uint denominator, uint target) internal pure returns (uint) {
+        // Inspired by https://github.com/0xProject/contracts/blob/1.0.0/contracts/Exchange.sol#L472-L490
+        uint remainder = mulmod(target, numerator, denominator);
+        if (remainder == 0) {
+            return 0;
+        }
+
+        return remainder.mul(1000000).div(numerator.mul(target));
     }
 }

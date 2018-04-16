@@ -82,6 +82,7 @@ contract Vault is Ownable, VaultInterface {
     /// @param amount Amount of tokens to transfer.
     function transfer(address token, address from, address to, uint amount) external onlyApproved(from) {
         // We do not check the balance here, as SafeMath will revert if sub / add fail. Due to over/underflows.
+        require(amount > 0);
         balances[token][from] = balances[token][from].sub(amount);
         balances[token][to] = balances[token][to].add(amount);
     }
