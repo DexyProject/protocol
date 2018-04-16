@@ -265,6 +265,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param target Value to multiply with.
     /// @return Percentage rounded.
     function roundingPercent(uint numerator, uint denominator, uint target) internal pure returns (uint) {
+        // Inspired by https://github.com/0xProject/contracts/blob/1.0.0/contracts/Exchange.sol#L472-L490
         uint remainder = mulmod(target, numerator, denominator);
         if (remainder == 0) {
             return 0;
