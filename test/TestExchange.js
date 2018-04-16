@@ -37,18 +37,18 @@ contract('Exchange', function (accounts) {
 
         beforeEach(async () => {
             order = {
-                tokenGet: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
                 exchange: exchange.address
             };
 
-            addresses = [order.user, order.tokenGive, order.tokenGet];
-            values = [order.amountGive, order.amountGet, order.expires, order.nonce];
+            addresses = [order.user, order.makerToken, order.takerToken];
+            values = [order.takerGet, order.makerGet, order.expires, order.nonce];
         });
 
 
@@ -79,10 +79,10 @@ contract('Exchange', function (accounts) {
             token = await MockToken.new();
 
             order = {
-                tokenGet: token.address,
-                amountGet: '10000000000000000000000',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '1000000000000000000',
+                takerToken: token.address,
+                makerGet: '10000000000000000000000',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '1000000000000000000',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -103,7 +103,7 @@ contract('Exchange', function (accounts) {
         });
 
         it('should not allow user to trade order without enough balance', async () => {
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
             try {
@@ -116,77 +116,77 @@ contract('Exchange', function (accounts) {
         });
 
         it('should transfer fees correctly on trade', async () => {
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
-            await token.mint(accounts[1], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await token.mint(accounts[1], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.makerGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), '2500000000000000');
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
 
         it('should transfer correctly when trade exceeds available amount on trade', async () => {
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
-            await token.mint(accounts[1], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await token.mint(accounts[1], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await token.mint(accounts[2], order.amountGet);
+            await token.mint(accounts[2], order.makerGet);
             await vault.approve(exchange.address, {from: accounts[2]});
-            await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
+            await vault.deposit(token.address, order.makerGet, {from: accounts[2]});
 
-            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet / 2, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.makerGet / 2, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.makerGet / 2);
 
-            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[2]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.makerGet, {from: accounts[2]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet);
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.makerGet);
             assert.equal(
-                (await vault.balanceOf(order.tokenGive, accounts[2])).toString(),
-                (order.amountGive / 2) - 1250000000000000
+                (await vault.balanceOf(order.makerToken, accounts[2])).toString(),
+                (order.takerGet / 2) - 1250000000000000
             );
         });
 
         it('should transfer correctly when trade exceeds available balance of user', async () => {
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive / 2});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet / 2});
             await vault.approve(exchange.address);
 
-            await token.mint(accounts[1], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await token.mint(accounts[1], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await token.mint(accounts[2], order.amountGet);
+            await token.mint(accounts[2], order.makerGet);
             await vault.approve(exchange.address, {from: accounts[2]});
-            await vault.deposit(token.address, order.amountGet, {from: accounts[2]});
+            await vault.deposit(token.address, order.makerGet, {from: accounts[2]});
 
-            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.makerGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.makerGet / 2);
         });
 
         it('should trade on chain created order correctly', async () => {
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
-            await exchange.order([order.tokenGive, order.tokenGet], data.values, {from: accounts[0]});
+            await exchange.order([order.makerToken, order.takerToken], data.values, {from: accounts[0]});
 
-            await token.mint(accounts[1], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await token.mint(accounts[1], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, '0x0', order.amountGet, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, '0x0', order.makerGet, {from: accounts[1]});
 
-            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), order.amountGive * (0.25 / 100));
+            assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), order.takerGet * (0.25 / 100));
             assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
         });
     });
@@ -201,10 +201,10 @@ contract('Exchange', function (accounts) {
             token = await MockToken.new();
 
             order = {
-                tokenGet: token.address,
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: token.address,
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -212,8 +212,8 @@ contract('Exchange', function (accounts) {
             };
 
             data = {
-                addresses: [order.tokenGive, order.tokenGet],
-                values: [order.amountGive, order.amountGet, order.expires, order.nonce]
+                addresses: [order.makerToken, order.takerToken],
+                values: [order.takerGet, order.makerGet, order.expires, order.nonce]
             }
         });
 
@@ -241,16 +241,16 @@ contract('Exchange', function (accounts) {
 
         it('should allow ordering on chain', async () => {
             await vault.approve(exchange.address);
-            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.makerGet, {from: accounts[0], value: order.takerGet});
 
             let result = await exchange.order(data.addresses, data.values, {from: accounts[0]});
 
             let log = result.logs[0].args;
             assert.equal(accounts[0], log.user);
-            assert.equal(order.tokenGive, log.tokenGive);
-            assert.equal(order.tokenGet, log.tokenGet);
-            assert.equal(order.amountGet, log.amountGet.toString(10));
-            assert.equal(order.amountGive, log.amountGive.toString(10));
+            assert.equal(order.makerToken, log.makerToken);
+            assert.equal(order.takerToken, log.takerToken);
+            assert.equal(order.makerGet, log.makerGet.toString(10));
+            assert.equal(order.takerGet, log.takerGet.toString(10));
             assert.equal(order.expires, log.expires);
             assert.equal(order.nonce, log.nonce);
 
@@ -260,7 +260,7 @@ contract('Exchange', function (accounts) {
 
         it('should not allow duplicate orders', async () => {
             await vault.approve(exchange.address);
-            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.makerGet, {from: accounts[0], value: order.takerGet});
 
             await exchange.order(data.addresses, data.values, {from: accounts[0]});
 
@@ -281,10 +281,10 @@ contract('Exchange', function (accounts) {
         beforeEach(async () => {
 
             order = {
-                tokenGet: '0xdead',
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: '0xdead',
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -292,19 +292,19 @@ contract('Exchange', function (accounts) {
             };
 
             data = {
-                addresses: [order.user, order.tokenGive, order.tokenGet],
-                values: [order.amountGive, order.amountGet, order.expires, order.nonce]
+                addresses: [order.user, order.makerToken, order.takerToken],
+                values: [order.takerGet, order.makerGet, order.expires, order.nonce]
             }
         });
 
         it('should return user balance if it is smaller than order amount', async () => {
-            await vault.deposit(0x0, order.amountGive / 2, {from: accounts[0], value: order.amountGive / 2});
-            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet / 2);
+            await vault.deposit(0x0, order.takerGet / 2, {from: accounts[0], value: order.takerGet / 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.makerGet / 2);
         });
 
         it('should return order balance if it is smaller than user balance', async () => {
-            await vault.deposit(0x0, order.amountGive * 2, {from: accounts[0], value: order.amountGive * 2});
-            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.amountGet);
+            await vault.deposit(0x0, order.takerGet * 2, {from: accounts[0], value: order.takerGet * 2});
+            assert.equal((await exchange.availableAmount(data.addresses, data.values)).toString(10), order.makerGet);
         });
 
     });
@@ -320,10 +320,10 @@ contract('Exchange', function (accounts) {
             token = await MockToken.new();
 
             order = {
-                tokenGet: token.address,
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: token.address,
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -344,18 +344,18 @@ contract('Exchange', function (accounts) {
         });
 
         it('should return false when vault has not been approved', async () => {
-            await token.mint(accounts[0], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[0]});
+            await token.mint(accounts[0], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[0]});
 
             assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
 
         it('should return false when order has been expired', async () => {
             order = {
-                tokenGet: token.address,
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: token.address,
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) - 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -364,7 +364,7 @@ contract('Exchange', function (accounts) {
 
             data = signOrder(order);
 
-            await vault.deposit(0x0, order.amountGet, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.makerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
             assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
@@ -372,10 +372,10 @@ contract('Exchange', function (accounts) {
 
         it('should return false when order has filled', async () => {
             order = {
-                tokenGet: token.address,
-                amountGet: '10',
-                tokenGive: '0x0000000000000000000000000000000000000000',
-                amountGive: '100',
+                takerToken: token.address,
+                makerGet: '10',
+                makerToken: '0x0000000000000000000000000000000000000000',
+                takerGet: '100',
                 expires: Math.floor((Date.now() / 1000) + 5000),
                 nonce: 10,
                 user: accounts[0],
@@ -384,14 +384,14 @@ contract('Exchange', function (accounts) {
 
             data = signOrder(order);
 
-            await vault.deposit(0x0, order.amountGive, {from: accounts[0], value: order.amountGive});
+            await vault.deposit(0x0, order.takerGet, {from: accounts[0], value: order.takerGet});
             await vault.approve(exchange.address);
 
-            await token.mint(accounts[1], order.amountGet);
-            await vault.deposit(token.address, order.amountGet, {from: accounts[1]});
+            await token.mint(accounts[1], order.makerGet);
+            await vault.deposit(token.address, order.makerGet, {from: accounts[1]});
             await vault.approve(exchange.address, {from: accounts[1]});
 
-            await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
+            await exchange.trade(data.addresses, data.values, data.sig, order.makerGet, {from: accounts[1]});
             assert.equal(await exchange.canTrade(data.addresses, data.values, data.sig), false);
         });
     });
@@ -440,8 +440,8 @@ function signOrder(order) {
 }
 
 function hashOrder(order) {
-    let addresses = [order.user, order.tokenGive, order.tokenGet];
-    let values = [order.amountGive, order.amountGet, order.expires, order.nonce];
+    let addresses = [order.user, order.makerToken, order.takerToken];
+    let values = [order.takerGet, order.makerGet, order.expires, order.nonce];
 
     let valuesHash = web3Utils.soliditySha3.apply(null, Object.entries(order).map(function (x) {
         return x[1]

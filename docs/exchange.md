@@ -38,7 +38,7 @@ Trades are made against orders, and the order struct is defined as follows:
 ```Solidity
 struct Order {
     address user;
-    address tokenGive;
+    address makerToken;
     address tokenGet;
     uint amountGive;
     uint amountGet;
@@ -57,7 +57,7 @@ From the struct definition above, we see an order includes:
 * an expiration date after which the order can no longer execute,
 * a nonce so that the order cannot be replayed
 
-The price of the token being sold is then amountGive/amountGet, using tokenGive as the base.
+The price of the token being sold is then amountGive/amountGet, using makerToken as the base.
 
 So, for example, if I'm buying TKN for ETH, then amountGive would be
 denominated in ETH, and amountGet would be in TKN. If I offer 1 ETH for 10 TKN,
@@ -88,7 +88,7 @@ in the contract selling TKN for ETH, with the following parameters:
 ```
 Order = {
   user = 0x123...,
-  tokenGive = TKN,
+  makerToken = TKN,
   tokenGet = ETH,
   amountGive = 1,
   amountGet = 10,
