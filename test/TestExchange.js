@@ -126,7 +126,7 @@ contract('Exchange', function (accounts) {
             await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), '2500000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+            assert.equal((await exchange.filled.call(data.hash)).toString(10), '10000000000000000000000')
         });
 
         it('should transfer correctly when trade exceeds available amount on trade', async () => {
@@ -144,12 +144,12 @@ contract('Exchange', function (accounts) {
             await exchange.trade(data.addresses, data.values, data.sig, order.amountGet / 2, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+            assert.equal((await exchange.filled.call(data.hash)).toString(10), order.amountGet / 2);
 
             await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[2]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '2500000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet);
+            assert.equal((await exchange.filled.call(data.hash)).toString(10), order.amountGet);
             assert.equal(
                 (await vault.balanceOf(order.tokenGive, accounts[2])).toString(),
                 (order.amountGive / 2) - 1250000000000000
@@ -171,7 +171,7 @@ contract('Exchange', function (accounts) {
             await exchange.trade(data.addresses, data.values, data.sig, order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(), '1250000000000000');
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), order.amountGet / 2);
+            assert.equal((await exchange.filled.call(data.hash)).toString(10), order.amountGet / 2);
         });
 
         it('should trade on chain created order correctly', async () => {
@@ -187,7 +187,7 @@ contract('Exchange', function (accounts) {
             await exchange.trade(data.addresses, data.values, '0x0', order.amountGet, {from: accounts[1]});
 
             assert.equal((await vault.balanceOf(0x0, feeAccount)).toString(10), order.amountGive * (0.25 / 100));
-            assert.equal((await exchange.filled.call(accounts[0], data.hash)).toString(10), '10000000000000000000000')
+            assert.equal((await exchange.filled.call(data.hash)).toString(10), '10000000000000000000000')
         });
     });
 
