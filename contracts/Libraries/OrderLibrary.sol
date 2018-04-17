@@ -3,10 +3,10 @@ pragma solidity ^0.4.21;
 library OrderLibrary {
 
     bytes32 constant public HASH_SCHEME = keccak256(
-        "address Token Get",
-        "uint Amount Get",
-        "address Token Give",
-        "uint Amount Give",
+        "address Taker Token",
+        "uint Maker Get",
+        "address Maker Token",
+        "uint Taker Get",
         "uint Expires",
         "uint Nonce",
         "address User",
