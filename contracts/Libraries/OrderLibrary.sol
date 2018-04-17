@@ -43,7 +43,7 @@ library OrderLibrary {
     }
 
     /// @dev Creates order struct from value arrays.
-    /// @param addresses Array of trade's user, makerToken and takerToken.
+    /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @return Order struct
     function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
