@@ -188,7 +188,6 @@ contract Exchange is Ownable, ExchangeInterface {
     function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
-
         require(roundingPercent(fillAmount, order.amountGet, order.amountGive) <= MAX_ROUNDING_PERCENTAGE);
         require(vault.balanceOf(order.tokenGet, msg.sender) >= fillAmount);
 
