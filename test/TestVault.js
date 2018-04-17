@@ -98,7 +98,7 @@ contract('Vault', function (accounts) {
         assert.equal(await vault.isERC777(token.address), false);
     });
 
-    it('should allow a user to approve and unapprove an exchange', async () => {
+    it('should allow a maker to approve and unapprove an exchange', async () => {
         await vault.addSpender(accounts[1]);
 
         assert.equal(await vault.isApproved(accounts[0], accounts[1]), false);

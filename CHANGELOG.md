@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Rearrange parameter ordering for trade function.
  - Using eth constant in exchange
  - Removed user from ```fills```
+ - Renamed give / get to maker / taker.
  
 ### Fixed
  - Checks for rounding errors
