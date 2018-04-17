@@ -23,7 +23,7 @@ contract Exchange is Ownable, ExchangeInterface {
     address public feeAccount;
 
     mapping (address => mapping (bytes32 => bool)) private orders;
-    mapping (address => mapping (bytes32 => uint)) private fills;
+    mapping (bytes32 => uint) private fills;
     mapping (bytes32 => bool) private cancelled;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
@@ -82,7 +82,7 @@ contract Exchange is Ownable, ExchangeInterface {
         require(order.amountGive > 0 && order.amountGet > 0);
 
         bytes32 hash = order.hash();
-        require(fills[order.user][hash] < order.amountGet);
+        require(fills[hash] < order.amountGet);
         require(!cancelled[hash]);
 
         cancelled[hash] = true;
@@ -147,11 +147,10 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     /// @dev Returns how much of an order was filled.
-    /// @param user User who created the order.
     /// @param hash Hash of the order.
     /// @return Amount which was filled.
-    function filled(address user, bytes32 hash) external view returns (uint) {
-        return fills[user][hash];
+    function filled(bytes32 hash) external view returns (uint) {
+        return fills[hash];
     }
 
     /// @dev Sets the taker fee.
@@ -202,8 +201,8 @@ contract Exchange is Ownable, ExchangeInterface {
         vault.transfer(order.tokenGet, msg.sender, order.user, fillAmount);
         vault.transfer(order.tokenGive, order.user, msg.sender, give.sub(tradeTakerFee));
 
-        fills[order.user][hash] = fills[order.user][hash].add(fillAmount);
-        assert(fills[order.user][hash] <= order.amountGet);
+        fills[hash] = fills[hash].add(fillAmount);
+        assert(fills[hash] <= order.amountGet);
 
         return fillAmount;
     }
@@ -219,7 +218,7 @@ contract Exchange is Ownable, ExchangeInterface {
         returns (bool)
     {
         // if the order has never been traded against, we need to check the sig.
-        if (fills[order.user][hash] == 0) {
+        if (fills[hash] == 0) {
             // ensures order was either created on chain, or signature is valid
             if (!isOrdered(order.user, hash) && !SignatureValidator.isValidSignature(hash, order.user, signature)) {
                 return false;
@@ -256,7 +255,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @return Amount of the order that can be filled.
     function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
         return SafeMath.min256(
-            order.amountGet.sub(fills[order.user][hash]),
+            order.amountGet.sub(fills[hash]),
             vault.balanceOf(order.tokenGive, order.user).mul(order.amountGet).div(order.amountGive)
         );
     }
