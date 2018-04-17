@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Vault can have multiple spenders.
  - Rearrange parameter ordering for trade function.
  - Using eth constant in exchange
+ - Removed user from ```fills```
  
 ### Fixed
  - Checks for rounding errors

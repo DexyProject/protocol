@@ -36,7 +36,7 @@ interface ExchangeInterface {
         returns (bool);
 
     function availableAmount(address[3] addresses, uint[4] values) external view returns (uint);
-    function filled(address user, bytes32 hash) external view returns (uint);
+    function filled(bytes32 hash) external view returns (uint);
     function isOrdered(address user, bytes32 hash) public view returns (bool);
     function vault() public view returns (VaultInterface);
 
