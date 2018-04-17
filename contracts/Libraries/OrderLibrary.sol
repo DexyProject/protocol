@@ -3,10 +3,10 @@ pragma solidity ^0.4.21;
 library OrderLibrary {
 
     bytes32 constant public HASH_SCHEME = keccak256(
-        "address Token Get",
-        "uint Amount Get",
-        "address Token Give",
-        "uint Amount Give",
+        "address Taker Token",
+        "uint Maker Get",
+        "address Maker Token",
+        "uint Taker Get",
         "uint Expires",
         "uint Nonce",
         "address User",
@@ -15,10 +15,10 @@ library OrderLibrary {
 
     struct Order {
         address user;
-        address tokenGive;
-        address tokenGet;
-        uint amountGive;
-        uint amountGet;
+        address makerToken;
+        address takerToken;
+        uint takerGet;
+        uint makerGet;
         uint expires;
         uint nonce;
     }
@@ -30,10 +30,10 @@ library OrderLibrary {
         return keccak256(
             HASH_SCHEME,
             keccak256(
-                order.tokenGet,
-                order.amountGet,
-                order.tokenGive,
-                order.amountGive,
+                order.takerToken,
+                order.makerGet,
+                order.makerToken,
+                order.takerGet,
                 order.expires,
                 order.nonce,
                 order.user,
@@ -43,16 +43,16 @@ library OrderLibrary {
     }
 
     /// @dev Creates order struct from value arrays.
-    /// @param addresses Array of trade's user, tokenGive and tokenGet.
-    /// @param values Array of trade's amountGive, amountGet, expires and nonce.
+    /// @param addresses Array of trade's user, makerToken and takerToken.
+    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
     /// @return Order struct
     function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
         return Order({
             user: addresses[0],
-            tokenGive: addresses[1],
-            tokenGet: addresses[2],
-            amountGive: values[0],
-            amountGet: values[1],
+            makerToken: addresses[1],
+            takerToken: addresses[2],
+            takerGet: values[0],
+            makerGet: values[1],
             expires: values[2],
             nonce: values[3]
         });
