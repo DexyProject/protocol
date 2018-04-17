@@ -12,6 +12,8 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
 
+    address constant public ETH = 0x0;
+
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
     uint256 constant private MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
 
@@ -35,7 +37,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param token Address of the token to withdraw.
     /// @param amount Amount of tokens to withdraw.
     function withdraw(address token, uint amount) external onlyOwner {
-        if (token == 0x0) {
+        if (token == ETH) {
             msg.sender.transfer(amount);
             return;
         }
