@@ -18,7 +18,7 @@ contract('Exchange', function (accounts) {
 
         vault = await Vault.new();
         exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
-        await vault.setExchange(exchange.address)
+        await vault.addSpender(exchange.address)
     });
 
     it('should revert when depositing ether', async () => {
