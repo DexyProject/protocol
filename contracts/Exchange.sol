@@ -47,7 +47,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Takes an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
@@ -64,7 +64,7 @@ contract Exchange is Ownable, ExchangeInterface {
         emit Traded(
             hash,
             order.makerToken,
-            order.takerGet * filledAmount / order.makerGet,
+            order.makerTokenAmount * filledAmount / order.takerTokenAmount,
             order.takerToken,
             filledAmount,
             order.maker,
@@ -74,15 +74,15 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Cancels an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     function cancel(address[3] addresses, uint[4] values) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
 
         require(msg.sender == order.maker);
-        require(order.takerGet > 0 && order.makerGet > 0);
+        require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
-        require(fills[hash] < order.makerGet);
+        require(fills[hash] < order.takerTokenAmount);
         require(!cancelled[hash]);
 
         cancelled[hash] = true;
@@ -91,7 +91,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Creates an order which is then indexed in the orderbook.
     /// @param addresses Array of trade's makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     function order(address[2] addresses, uint[4] values) external {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(
             [msg.sender, addresses[0], addresses[1]],
@@ -99,10 +99,10 @@ contract Exchange is Ownable, ExchangeInterface {
         );
 
         require(vault.isApproved(order.maker, this));
-        require(vault.balanceOf(order.makerToken, order.maker) >= order.takerGet);
+        require(vault.balanceOf(order.makerToken, order.maker) >= order.makerTokenAmount);
         require(order.makerToken != order.takerToken);
-        require(order.takerGet > 0);
-        require(order.makerGet > 0);
+        require(order.makerTokenAmount > 0);
+        require(order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
 
@@ -113,8 +113,8 @@ contract Exchange is Ownable, ExchangeInterface {
             order.maker,
             order.makerToken,
             order.takerToken,
-            order.takerGet,
-            order.makerGet,
+            order.makerTokenAmount,
+            order.takerTokenAmount,
             order.expires,
             order.nonce
         );
@@ -122,7 +122,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Checks if a order can be traded.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @param signature Signed order along with signature mode.
     /// @return Boolean if order can be traded
     function canTrade(address[3] addresses, uint[4] values, bytes signature)
@@ -139,7 +139,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Checks how much of an order can be filled.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @return Amount of the order which can be filled.
     function availableAmount(address[3] addresses, uint[4] values) external view returns (uint) {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
@@ -187,10 +187,10 @@ contract Exchange is Ownable, ExchangeInterface {
     function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
-        require(roundingPercent(fillAmount, order.makerGet, order.takerGet) <= MAX_ROUNDING_PERCENTAGE);
+        require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
         require(vault.balanceOf(order.takerToken, msg.sender) >= fillAmount);
 
-        uint give = order.takerGet.mul(fillAmount).div(order.makerGet);
+        uint give = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
         uint tradeTakerFee = give.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
@@ -201,7 +201,7 @@ contract Exchange is Ownable, ExchangeInterface {
         vault.transfer(order.makerToken, order.maker, msg.sender, give.sub(tradeTakerFee));
 
         fills[hash] = fills[hash].add(fillAmount);
-        assert(fills[hash] <= order.makerGet);
+        assert(fills[hash] <= order.takerTokenAmount);
 
         return fillAmount;
     }
@@ -232,11 +232,11 @@ contract Exchange is Ownable, ExchangeInterface {
             return false;
         }
 
-        if (order.makerGet == 0) {
+        if (order.takerTokenAmount == 0) {
             return false;
         }
 
-        if (order.takerGet == 0) {
+        if (order.makerTokenAmount == 0) {
             return false;
         }
 
@@ -254,8 +254,8 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @return Amount of the order that can be filled.
     function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
         return SafeMath.min256(
-            order.makerGet.sub(fills[hash]),
-            vault.balanceOf(order.makerToken, order.maker).mul(order.makerGet).div(order.takerGet)
+            order.takerTokenAmount.sub(fills[hash]),
+            vault.balanceOf(order.makerToken, order.maker).mul(order.takerTokenAmount).div(order.makerTokenAmount)
         );
     }
 

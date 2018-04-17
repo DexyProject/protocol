@@ -9,9 +9,9 @@ interface ExchangeInterface {
     event Traded(
         bytes32 indexed hash,
         address makerToken,
-        uint takerGet,
+        uint makerTokenAmount,
         address takerToken,
-        uint makerGet,
+        uint takerTokenAmount,
         address maker,
         address taker
     );
@@ -20,8 +20,8 @@ interface ExchangeInterface {
         address maker,
         address makerToken,
         address takerToken,
-        uint takerGet,
-        uint makerGet,
+        uint makerTokenAmount,
+        uint takerTokenAmount,
         uint expires,
         uint nonce
     );

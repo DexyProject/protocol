@@ -4,9 +4,9 @@ library OrderLibrary {
 
     bytes32 constant public HASH_SCHEME = keccak256(
         "address Taker Token",
-        "uint Taker Get",
+        "uint Taker Token Amount",
         "address Maker Token",
-        "uint Maker Get",
+        "uint Maker Token Amount",
         "uint Expires",
         "uint Nonce",
         "address Maker",
@@ -17,8 +17,8 @@ library OrderLibrary {
         address maker;
         address makerToken;
         address takerToken;
-        uint takerGet;
-        uint makerGet;
+        uint makerTokenAmount;
+        uint takerTokenAmount;
         uint expires;
         uint nonce;
     }
@@ -31,9 +31,9 @@ library OrderLibrary {
             HASH_SCHEME,
             keccak256(
                 order.takerToken,
-                order.makerGet,
+                order.takerTokenAmount,
                 order.makerToken,
-                order.takerGet,
+                order.makerTokenAmount,
                 order.expires,
                 order.nonce,
                 order.maker,
@@ -44,15 +44,15 @@ library OrderLibrary {
 
     /// @dev Creates order struct from value arrays.
     /// @param addresses Array of trade's user, makerToken and takerToken.
-    /// @param values Array of trade's takerGet, makerGet, expires and nonce.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @return Order struct
     function createOrder(address[3] addresses, uint[4] values) internal pure returns (Order memory) {
         return Order({
             maker: addresses[0],
             makerToken: addresses[1],
             takerToken: addresses[2],
-            takerGet: values[0],
-            makerGet: values[1],
+            makerTokenAmount: values[0],
+            takerTokenAmount: values[1],
             expires: values[2],
             nonce: values[3]
         });
