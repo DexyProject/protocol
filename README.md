@@ -30,6 +30,16 @@ To run linting, use solium:
 solium --dir ./contracts
 ```
 
+### Deployed Addresses
+
+#### Ropsten
+ - Exchange: [0x4f09a1292a4ec37e7186fe2d9bdfd2252427c5e9](https://ropsten.etherscan.io/address/0x4f09a1292a4ec37e7186fe2d9bdfd2252427c5e9)
+ - Vault: [0x2be091449b89a15fb6b959f3da35ffb419620f89](https://ropsten.etherscan.io/address/0x2be091449b89a15fb6b959f3da35ffb419620f89)
+
+#### Kovan
+ - Exchange: [0xc018f2b0d8608b43b2bbbe29f5cd21e852b0bd96](https://kovan.etherscan.io/address/0xc018f2b0d8608b43b2bbbe29f5cd21e852b0bd96)
+ - Vault: [0x5c64dbdc3618995b76677b1d3a0d3b1a5c21b41f](https://kovan.etherscan.io/address/0x5c64dbdc3618995b76677b1d3a0d3b1a5c21b41f)
+
 ## Built With
 * [Truffle](https://github.com/trufflesuite/truffle) - Ethereum development environment 
 
