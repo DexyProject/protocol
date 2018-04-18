@@ -33,7 +33,7 @@ solium --dir ./contracts
 ### Deployed Addresses
 
 #### Mainnet
- - Exchange: (0x2c8ce3eb12116a3da2775a89a499913dad4fab2a)[https://etherscan.io/address/0x2c8ce3eb12116a3da2775a89a499913dad4fab2a]
+ - Exchange: (0xae84be55ca6f4486911a7bb33a34293327ba52a5)[https://etherscan.io/address/0xae84be55ca6f4486911a7bb33a34293327ba52a5]
  - Vault: (0x89b2eab864e30691804d3e1be7b007c49864a286)[https://etherscan.io/address/0x89b2eab864e30691804d3e1be7b007c49864a286]
 
 #### Ropsten
