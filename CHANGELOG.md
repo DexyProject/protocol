@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [unreleased]
 
+## [2.0.0] - 2018-04-18
+
 ### Changed
  - Vault can have multiple spenders.
  - Rearrange parameter ordering for trade function.
