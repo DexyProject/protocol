@@ -115,9 +115,7 @@ contract Vault is Ownable, VaultInterface {
         if (withdrawOnTransfer[to]) {
             // we delegatecall here to ensure that a malicious receiver cannot cause a trade to revert.
             // if the delegatecall fails, we fallback to our internal transfer method.
-            if (address(this).delegatecall(bytes4(keccak256("withdrawTo(address,address,uint)")), token, to, amount)) {
-                return;
-            }
+            if (address(this).delegatecall(bytes4(keccak256("withdrawTo(address,address,uint)")), token, to, amount)) return;
         }
 
         balances[token][to] = balances[token][to].add(amount);
