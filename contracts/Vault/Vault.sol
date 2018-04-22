@@ -113,8 +113,8 @@ contract Vault is Ownable, VaultInterface {
         balances[token][from] = balances[token][from].sub(amount);
 
         if (withdrawOnTransfer[to]) {
-            // we delegatecall here to ensure that a malicious receiver cannot cause a trade to revert.
-            // if the delegatecall fails, we fallback to our internal transfer method.
+            // we call here to ensure that a malicious receiver cannot cause a trade to revert.
+            // if the calls fails, we fallback to our internal transfer method.
             if (nonThrowingWithdrawTo(to, token, amount)) return;
         }
 
