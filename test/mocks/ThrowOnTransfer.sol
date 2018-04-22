@@ -6,7 +6,6 @@ interface VaultInterface {
     function enableWithdrawOnTransfer() external;
 }
 
-
 contract ThrowOnTransfer {
 
     function () public payable { revert(); }
@@ -18,5 +17,4 @@ contract ThrowOnTransfer {
     function enable(VaultInterface vault) public {
         vault.enableWithdrawOnTransfer();
     }
-
 }
