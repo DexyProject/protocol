@@ -94,6 +94,14 @@ contract Vault is Ownable, VaultInterface {
         emit RemovedSpender(spender);
     }
 
+    function enableWithdrawOnTransfer() external {
+        withdrawOnTransfer[msg.sender] = true;
+    }
+
+    function disableWithdrawOnTransfer() external {
+        withdrawOnTransfer[msg.sender] = false;
+    }
+
     /// @dev Transfers balances of a token between users.
     /// @param token Address of the token to transfer.
     /// @param from Address of the user to transfer tokens from.
