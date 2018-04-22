@@ -115,9 +115,7 @@ contract Vault is Ownable, VaultInterface {
         if (withdrawOnTransfer[to]) {
             // we delegatecall here to ensure that a malicious receiver cannot cause a trade to revert.
             // if the delegatecall fails, we fallback to our internal transfer method.
-            if (address(this).delegatecall(bytes4(keccak256("withdrawTo(address,address,uint)")), token, to, amount)) {
-                return;
-            }
+            if (nonThrowingWithdrawTo(to, token, amount)) return;
         }
 
         balances[token][to] = balances[token][to].add(amount);
@@ -217,5 +215,17 @@ contract Vault is Ownable, VaultInterface {
         }
 
         require(ERC20(token).transfer(user, amount));
+    }
+
+    function nonThrowingWithdrawTo(address user, address token, uint amount) private returns (bool) {
+        if (token == ETH) {
+            return user.send(amount);
+        }
+
+        if (isERC777[token]) {
+            return token.call(bytes4(keccak256("send(address,uint256)")), user, amount);
+        }
+
+        return token.call(bytes4(keccak256("transfer(address,uint256)")), user, amount);
     }
 }
