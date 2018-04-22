@@ -104,7 +104,7 @@ contract Vault is Ownable, VaultInterface {
         require(amount > 0);
         balances[token][from] = balances[token][from].sub(amount);
 
-        if (withdrawOnTransfer[to]) {
+        if (withdrawOnTransfer[to] && token != ETH && !isERC777[token]) {
             withdrawTo(token, to, amount);
             return;
         }
