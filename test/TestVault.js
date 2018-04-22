@@ -1,6 +1,7 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
+const ThrowOnTransfer = artifacts.require('./mocks/ThrowOnTransfer.sol');
 const utils = require('./helpers/Utils.js');
 
 contract('Vault', function (accounts) {
@@ -59,6 +60,25 @@ contract('Vault', function (accounts) {
 
             await vault.withdraw(0x0, using, {from: accounts[0]});
             assert.equal(await vault.balanceOf.call(0x0, accounts[0]), 0);
+        });
+
+        it('should fail when withdrawing to throwing contract', async () => {
+            let thrower = await ThrowOnTransfer.new();
+
+            await vault.addSpender(accounts[0]);
+            await vault.approve(accounts[0], {from: accounts[0]});
+
+            let using = 10;
+            await vault.deposit(0x0, using, {from: accounts[0], value: using});
+            await vault.transfer('0x0', accounts[0], thrower.address, using);
+
+            try {
+                await thrower.withdraw(vault.address, '0x0', using);
+            } catch (error) {
+                return utils.ensureException(error);
+            }
+
+            assert.fail('withdrawing ether did not fail');
         });
     });
 
@@ -135,5 +155,40 @@ contract('Vault', function (accounts) {
 
         await vault.removeSpender(exchange);
         assert.equal(false, await vault.isSpender(exchange));
+    });
+
+    describe('withdraw on transfer', async () => {
+
+        beforeEach(async () => {
+            await vault.addSpender(accounts[0]);
+            await vault.approve(accounts[0], {from: accounts[0]});
+            await vault.enableWithdrawOnTransfer({from: accounts[1]});
+        });
+
+        it('should automatically withdraw eth on transfer', async () => {
+            let using = 10;
+            let balance = await web3.eth.getBalance(accounts[1]);
+
+            await vault.deposit(0x0, using, {from: accounts[0], value: using});
+            await vault.transfer('0x0', accounts[0], accounts[1], using);
+
+            assert.equal(await web3.eth.getBalance(accounts[1]).toString(10), balance.plus(using).toString(10));
+            assert.equal(await vault.balanceOf.call('0x0', accounts[1]), 0);
+        });
+
+        it('should internally transfer to throwing contract', async () => {
+            let thrower = await ThrowOnTransfer.new();
+            await thrower.enable(vault.address);
+
+            await vault.addSpender(accounts[0]);
+            await vault.approve(accounts[0], {from: accounts[0]});
+
+            let using = 10;
+            await vault.deposit(0x0, using, {from: accounts[0], value: using});
+            await vault.transfer('0x0', accounts[0], thrower.address, using);
+
+            assert.equal(await web3.eth.getBalance(thrower.address).toString(10), 0);
+            assert.equal(await vault.balanceOf.call('0x0', thrower.address), using);
+        });
     });
 });
