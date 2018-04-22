@@ -19,6 +19,7 @@ contract Vault is Ownable, VaultInterface {
     mapping (address => mapping (address => uint)) private balances;
     mapping (address => uint) private accounted;
     mapping (address => bool) private spenders;
+    mapping (address => bool) private withdrawOnTransfer;
 
     address private latest;
 
@@ -102,6 +103,12 @@ contract Vault is Ownable, VaultInterface {
         // We do not check the balance here, as SafeMath will revert if sub / add fail. Due to over/underflows.
         require(amount > 0);
         balances[token][from] = balances[token][from].sub(amount);
+
+        if (withdrawOnTransfer[to]) {
+            withdrawTo(token, to, amount);
+            return;
+        }
+
         balances[token][to] = balances[token][to].add(amount);
     }
 
