@@ -199,24 +199,14 @@ contract Vault is Ownable, VaultInterface {
         emit Deposited(user, token, amount);
     }
 
+    function withdrawTo(address user, address token, uint amount) private {
+        require(nonThrowingWithdrawTo(user, token, amount));
+    }
+
     /// @dev Withdraws a specific token.
     /// @param user Address of the user to withdraw to.
     /// @param token Address of the token to withdraw.
     /// @param amount Amount of tokens to withdraw.
-    function withdrawTo(address user, address token, uint amount) private {
-        if (token == ETH) {
-            user.transfer(amount);
-            return;
-        }
-
-        if (isERC777[token]) {
-            ERC777(token).send(user, amount);
-            return;
-        }
-
-        require(ERC20(token).transfer(user, amount));
-    }
-
     function nonThrowingWithdrawTo(address user, address token, uint amount) private returns (bool) {
         if (token == ETH) {
             return user.send(amount);
