@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
@@ -26,7 +26,7 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (bytes32 => uint) private fills;
     mapping (bytes32 => bool) private cancelled;
 
-    function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
+    constructor(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
