@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [unreleased]
 
+### Changed
+ - Deduplicated withdraw handling.
+
 ## [2.0.0] - 2018-04-18
 
 ### Changed
