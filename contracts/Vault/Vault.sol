@@ -216,8 +216,9 @@ contract Vault is Ownable, VaultInterface {
             return token.call(bytes4(keccak256("send(address,uint256)")), user, amount);
         }
 
+        // We need to do this due to the fact that older ERC20 implementations may return false instead of throw.
+        // once we can catch in solidity, this can be removed.
         bytes4 sig = bytes4(keccak256("transfer(address,uint256)"));
-
         assembly {
             let ptr := mload(0x40)
             mstore(ptr, sig)
