@@ -215,22 +215,9 @@ contract Vault is Ownable, VaultInterface {
         if (isERC777[token]) {
             return token.call(bytes4(keccak256("send(address,uint256)")), user, amount);
         }
-
-        // We need to do this due to the fact that older ERC20 implementations may return false instead of throw.
-        // once we can catch in solidity, this can be removed.
-        bool success = token.call(bytes4(keccak256("transfer(address,uint256)")), user, amount);
-        if (!success) {
-            return false;
-        }
-
-        assembly {
-            let size := returndatasize
-            if gt(size, 0) {
-                returndatacopy(0x0, 0x0, size)
-                return(0x0, size)
-            }
-        }
-
+        
+        // We allow ERC20 to fail, griefing in this scenario is hard and a throw / false should be treated fatally.
+        require(ERC20(token).transfer(user, amount));
         return true;
     }
 }
