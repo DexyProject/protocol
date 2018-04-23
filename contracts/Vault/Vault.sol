@@ -224,9 +224,10 @@ contract Vault is Ownable, VaultInterface {
         }
 
         assembly {
-            if gt(returndatasize, 0) {
-                returndatacopy(0x0, 0x0, returndatasize)
-                return(0x0, returndatasize)
+            let size := returndatasize
+            if gt(size, 0) {
+                returndatacopy(0x0, 0x0, size)
+                return(0x0, size)
             }
         }
 
