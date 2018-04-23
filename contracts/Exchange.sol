@@ -51,25 +51,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
-        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
-
-        require(msg.sender != order.maker);
-        bytes32 hash = order.hash();
-
-        require(order.makerToken != order.takerToken);
-        require(canTrade(order, signature, hash));
-
-        uint filledAmount = performTrade(order, maxFillAmount, hash);
-
-        emit Traded(
-            hash,
-            order.makerToken,
-            order.makerTokenAmount * filledAmount / order.takerTokenAmount,
-            order.takerToken,
-            filledAmount,
-            order.maker,
-            msg.sender
-        );
+        trade(OrderLibrary.createOrder(addresses, values), signature, maxFillAmount);
     }
 
     /// @dev Cancels an order.
@@ -181,29 +163,42 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
+    /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
-    /// @param hash Hash of the order.
-    /// @return Amount that was filled.
-    function performTrade(OrderLibrary.Order memory order, uint maxFillAmount, bytes32 hash) internal returns (uint) {
+    function trade(OrderLibrary.Order memory order, bytes signature, uint maxFillAmount) internal {
+        require(msg.sender != order.maker);
+        bytes32 hash = order.hash();
+
+        require(order.makerToken != order.takerToken);
+        require(canTrade(order, signature, hash));
+
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
         require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
         require(vault.balanceOf(order.takerToken, msg.sender) >= fillAmount);
 
-        uint give = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
-        uint tradeTakerFee = give.mul(takerFee).div(1 ether);
+        uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
+        uint tradeTakerFee = makeAmount.mul(takerFee).div(1 ether);
 
         if (tradeTakerFee > 0) {
             vault.transfer(order.makerToken, order.maker, feeAccount, tradeTakerFee);
         }
 
         vault.transfer(order.takerToken, msg.sender, order.maker, fillAmount);
-        vault.transfer(order.makerToken, order.maker, msg.sender, give.sub(tradeTakerFee));
+        vault.transfer(order.makerToken, order.maker, msg.sender, makeAmount.sub(tradeTakerFee));
 
         fills[hash] = fills[hash].add(fillAmount);
         assert(fills[hash] <= order.takerTokenAmount);
 
-        return fillAmount;
+        emit Traded(
+            hash,
+            order.makerToken,
+            makeAmount,
+            order.takerToken,
+            fillAmount,
+            order.maker,
+            msg.sender
+        );
     }
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
