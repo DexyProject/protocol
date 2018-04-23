@@ -216,6 +216,18 @@ contract Vault is Ownable, VaultInterface {
             return token.call(bytes4(keccak256("send(address,uint256)")), user, amount);
         }
 
-        return token.call(bytes4(keccak256("transfer(address,uint256)")), user, amount);
+        bytes4 sig = bytes4(keccak256("transfer(address,uint256)"));
+
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, sig)
+            mstore(add(ptr, 0x04), user)
+            mstore(add(ptr, 0x24), amount)
+
+            let success := call(5000, token, 0, ptr, 0x44, ptr, 0x20)
+            let size := returndatasize
+            if eq(success, 0) { return(0, success) }
+            if gt(size, 0) { return (ptr, size) }
+        }
     }
 }
