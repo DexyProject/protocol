@@ -10,10 +10,10 @@ contract HookSubscriberMock {
         tokens[token] += amount;
     }
 
-    function createOrder(address token, uint amount, ExchangeInterface exchange) external {
-        exchange.order(
-            [token, address(0x0)],
-            [amount, 10, (now + 10 days), now]
-        );
+    function createOrder(address[2] addresses, uint[4] values, ExchangeInterface exchange) external {
+        exchange.subscribe();
+        exchange.vault().approve(exchange);
+        exchange.vault().deposit(addresses[0], values[0]);
+        exchange.order(addresses, values);
     }
 }
