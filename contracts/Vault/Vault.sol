@@ -19,6 +19,7 @@ contract Vault is Ownable, VaultInterface {
     mapping (address => mapping (address => uint)) private balances;
     mapping (address => uint) private accounted;
     mapping (address => bool) private spenders;
+    mapping (address => bool) private withdrawOnTransfer;
 
     address private latest;
 
@@ -57,13 +58,7 @@ contract Vault is Ownable, VaultInterface {
         balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
         accounted[token] = accounted[token].sub(amount);
 
-        if (token == ETH) {
-            msg.sender.transfer(amount);
-        } else if (isERC777[token]) {
-            ERC777(token).send(msg.sender, amount);
-        } else {
-            require(ERC20(token).transfer(msg.sender, amount));
-        }
+        withdrawTo(msg.sender, token, amount);
 
         emit Withdrawn(msg.sender, token, amount);
     }
@@ -99,6 +94,14 @@ contract Vault is Ownable, VaultInterface {
         emit RemovedSpender(spender);
     }
 
+    function enableWithdrawOnTransfer() external {
+        withdrawOnTransfer[msg.sender] = true;
+    }
+
+    function disableWithdrawOnTransfer() external {
+        withdrawOnTransfer[msg.sender] = false;
+    }
+
     /// @dev Transfers balances of a token between users.
     /// @param token Address of the token to transfer.
     /// @param from Address of the user to transfer tokens from.
@@ -108,6 +111,13 @@ contract Vault is Ownable, VaultInterface {
         // We do not check the balance here, as SafeMath will revert if sub / add fail. Due to over/underflows.
         require(amount > 0);
         balances[token][from] = balances[token][from].sub(amount);
+
+        if (withdrawOnTransfer[to]) {
+            // we call here to ensure that a malicious receiver cannot cause a trade to revert.
+            // if the calls fails, we fallback to our internal transfer method.
+            if (nonThrowingWithdrawTo(to, token, amount)) return;
+        }
+
         balances[token][to] = balances[token][to].add(amount);
     }
 
@@ -157,17 +167,7 @@ contract Vault is Ownable, VaultInterface {
     /// @dev Allows owner to withdraw tokens accidentally sent to the contract.
     /// @param token Address of the token to withdraw.
     function withdrawOverflow(address token) public onlyOwner {
-        if (token == ETH) {
-            msg.sender.transfer(overflow(token));
-            return;
-        }
-
-        if (isERC777[token]) {
-            ERC777(token).send(msg.sender, overflow(token));
-            return;
-        }
-
-        require(ERC20(token).transfer(msg.sender, overflow(token)));
+        withdrawTo(msg.sender, token, overflow(token));
     }
 
     /// @dev Returns the balance of a user for a specified token.
@@ -197,5 +197,27 @@ contract Vault is Ownable, VaultInterface {
         balances[token][user] = balances[token][user].add(amount);
         accounted[token] = accounted[token].add(amount);
         emit Deposited(user, token, amount);
+    }
+
+    function withdrawTo(address user, address token, uint amount) private {
+        require(nonThrowingWithdrawTo(user, token, amount));
+    }
+
+    /// @dev Withdraws a specific token.
+    /// @param user Address of the user to withdraw to.
+    /// @param token Address of the token to withdraw.
+    /// @param amount Amount of tokens to withdraw.
+    function nonThrowingWithdrawTo(address user, address token, uint amount) private returns (bool) {
+        if (token == ETH) {
+            return user.send(amount);
+        }
+
+        if (isERC777[token]) {
+            return token.call(bytes4(keccak256("send(address,uint256)")), user, amount);
+        }
+        
+        // We allow ERC20 to fail, griefing in this scenario is hard and a throw / false should be treated fatally.
+        require(ERC20(token).transfer(user, amount));
+        return true;
     }
 }
