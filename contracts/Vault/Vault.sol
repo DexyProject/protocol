@@ -229,5 +229,7 @@ contract Vault is Ownable, VaultInterface {
             if eq(success, 0) { return(0, success) }
             if gt(size, 0) { return (ptr, size) }
         }
+
+        return true;
     }
 }
