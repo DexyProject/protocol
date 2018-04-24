@@ -57,13 +57,7 @@ contract Vault is Ownable, VaultInterface {
         balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
         accounted[token] = accounted[token].sub(amount);
 
-        if (token == ETH) {
-            msg.sender.transfer(amount);
-        } else if (isERC777[token]) {
-            ERC777(token).send(msg.sender, amount);
-        } else {
-            require(ERC20(token).transfer(msg.sender, amount));
-        }
+        withdrawTo(msg.sender, token, amount);
 
         emit Withdrawn(msg.sender, token, amount);
     }
@@ -157,17 +151,7 @@ contract Vault is Ownable, VaultInterface {
     /// @dev Allows owner to withdraw tokens accidentally sent to the contract.
     /// @param token Address of the token to withdraw.
     function withdrawOverflow(address token) public onlyOwner {
-        if (token == ETH) {
-            msg.sender.transfer(overflow(token));
-            return;
-        }
-
-        if (isERC777[token]) {
-            ERC777(token).send(msg.sender, overflow(token));
-            return;
-        }
-
-        require(ERC20(token).transfer(msg.sender, overflow(token)));
+        withdrawTo(msg.sender, token, overflow(token));
     }
 
     /// @dev Returns the balance of a user for a specified token.
@@ -197,5 +181,23 @@ contract Vault is Ownable, VaultInterface {
         balances[token][user] = balances[token][user].add(amount);
         accounted[token] = accounted[token].add(amount);
         emit Deposited(user, token, amount);
+    }
+
+    /// @dev Withdraws tokens to user.
+    /// @param user Address of the target user.
+    /// @param token Address of the token.
+    /// @param amount Amount of tokens.
+    function withdrawTo(address user, address token, uint amount) private {
+        if (token == ETH) {
+            user.transfer(amount);
+            return;
+        }
+
+        if (isERC777[token]) {
+            ERC777(token).send(user, amount);
+            return;
+        }
+
+        require(ERC20(token).transfer(user, amount));
     }
 }
