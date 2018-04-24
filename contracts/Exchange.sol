@@ -51,7 +51,7 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
-        trade(OrderLibrary.createOrder(addresses, values), signature, maxFillAmount);
+        trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
     }
 
     /// @dev Cancels an order.
@@ -163,10 +163,11 @@ contract Exchange is Ownable, ExchangeInterface {
 
     /// @dev Executes the actual trade by transferring balances.
     /// @param order Order to be traded.
+    /// @param taker Address of the taker.
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
-    function trade(OrderLibrary.Order memory order, bytes signature, uint maxFillAmount) internal {
-        require(msg.sender != order.maker);
+    function trade(OrderLibrary.Order memory order, address taker, bytes signature, uint maxFillAmount) internal {
+        require(taker != order.maker);
         bytes32 hash = order.hash();
 
         require(order.makerToken != order.takerToken);
@@ -175,7 +176,7 @@ contract Exchange is Ownable, ExchangeInterface {
         uint fillAmount = SafeMath.min256(maxFillAmount, availableAmount(order, hash));
 
         require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
-        require(vault.balanceOf(order.takerToken, msg.sender) >= fillAmount);
+        require(vault.balanceOf(order.takerToken, taker) >= fillAmount);
 
         uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
         uint tradeTakerFee = makeAmount.mul(takerFee).div(1 ether);
@@ -184,8 +185,8 @@ contract Exchange is Ownable, ExchangeInterface {
             vault.transfer(order.makerToken, order.maker, feeAccount, tradeTakerFee);
         }
 
-        vault.transfer(order.takerToken, msg.sender, order.maker, fillAmount);
-        vault.transfer(order.makerToken, order.maker, msg.sender, makeAmount.sub(tradeTakerFee));
+        vault.transfer(order.takerToken, taker, order.maker, fillAmount);
+        vault.transfer(order.makerToken, order.maker, taker, makeAmount.sub(tradeTakerFee));
 
         fills[hash] = fills[hash].add(fillAmount);
         assert(fills[hash] <= order.takerTokenAmount);
@@ -197,7 +198,7 @@ contract Exchange is Ownable, ExchangeInterface {
             order.takerToken,
             fillAmount,
             order.maker,
-            msg.sender
+            taker
         );
     }
 
