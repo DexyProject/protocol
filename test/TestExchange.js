@@ -2,6 +2,7 @@ const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
+const EIP820Registry = artifacts.require('./mocks/ERC820Registry.sol');
 const utils = require('./helpers/Utils.js');
 const web3Utils = require('web3-utils');
 const ethutil = require('ethereumjs-util');
@@ -10,13 +11,15 @@ const schema_hash = '0xb9caf644225739cd2bda9073346357ae4a0c3d71809876978bd81cc70
 
 contract('Exchange', function (accounts) {
 
-    let vault, exchange;
+    let vault, exchange, erc820Registry;
     let feeAccount;
 
     beforeEach(async () => {
         feeAccount = accounts[4];
 
-        vault = await Vault.new();
+        erc820Registry = await EIP820Registry.new();
+
+        vault = await Vault.new(erc820Registry.address);
         exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
         await vault.addSpender(exchange.address)
     });

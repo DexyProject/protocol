@@ -1,6 +1,7 @@
 pragma solidity ^0.4.21;
 
 import "./VaultInterface.sol";
+import "../Interfaces/ERC820.sol";
 import "../Libraries/SafeMath.sol";
 import "../Ownership/Ownable.sol";
 import "../Tokens/ERC20.sol";
@@ -30,6 +31,10 @@ contract Vault is Ownable, VaultInterface {
     modifier onlyApproved(address user) {
         require(approved[user][msg.sender]);
         _;
+    }
+
+    function Vault(ERC820 registry) public {
+        registry.setManager(this, msg.sender);
     }
 
     /// @dev Deposits a specific token.
@@ -160,6 +165,10 @@ contract Vault is Ownable, VaultInterface {
     /// @return Balance for the user.
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
+    }
+
+    function canImplementInterfaceForAddress(address, bytes32) public view returns (bytes32) {
+        return keccak256("ERC820_ACCEPT_MAGIC");
     }
 
     /// @dev Calculates how many tokens were accidentally sent to the contract.
