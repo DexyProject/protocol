@@ -18,7 +18,6 @@ contract('Exchange', function (accounts) {
         feeAccount = accounts[4];
 
         erc820Registry = await EIP820Registry.new();
-
         vault = await Vault.new(erc820Registry.address);
         exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
         await vault.addSpender(exchange.address)

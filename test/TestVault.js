@@ -3,7 +3,6 @@ const MockToken = artifacts.require('./mocks/Token.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
 const EIP820Registry = artifacts.require('./mocks/ERC820Registry.sol');
 const utils = require('./helpers/Utils.js');
-const web3Utils = require('web3-utils');
 
 contract('Vault', function (accounts) {
 
@@ -14,12 +13,6 @@ contract('Vault', function (accounts) {
 
         token = await MockToken.new();
         vault = await Vault.new(erc820Registry.address);
-
-        await erc820Registry.setInterfaceImplementer(
-            vault.address,
-            web3Utils.soliditySha3("ERC777TokensRecipient"),
-            vault.address
-        );
     });
 
     describe('funds', async () => {

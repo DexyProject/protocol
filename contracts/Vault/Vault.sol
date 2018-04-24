@@ -34,7 +34,7 @@ contract Vault is Ownable, VaultInterface {
     }
 
     function Vault(ERC820 registry) public {
-        registry.setManager(this, msg.sender);
+        registry.setInterfaceImplementer(address(this), keccak256("ERC777TokensRecipient"), address(this));
     }
 
     /// @dev Deposits a specific token.
@@ -165,10 +165,6 @@ contract Vault is Ownable, VaultInterface {
     /// @return Balance for the user.
     function balanceOf(address token, address user) public view returns (uint) {
         return balances[token][user];
-    }
-
-    function canImplementInterfaceForAddress(address, bytes32) public view returns (bytes32) {
-        return keccak256("ERC820_ACCEPT_MAGIC");
     }
 
     /// @dev Calculates how many tokens were accidentally sent to the contract.
