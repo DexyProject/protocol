@@ -256,7 +256,7 @@ contract('Exchange', function (accounts) {
             let result = await exchange.order(data.addresses, data.values, {from: accounts[0]});
 
             let log = result.logs[0].args;
-            assert.equal(accounts[0].toLowerCase(), log.maker.toLowerCase());
+            assert.equal(accounts[0], log.maker);
             assert.equal(order.makerToken, log.makerToken);
             assert.equal(order.takerToken, log.takerToken);
             assert.equal(order.takerTokenAmount, log.takerTokenAmount.toString(10));
