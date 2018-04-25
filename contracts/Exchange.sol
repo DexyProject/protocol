@@ -72,6 +72,25 @@ contract Exchange is Ownable, ExchangeInterface {
         );
     }
 
+    /// @todo ABIEncoderV2 this wont work with the signature stuff
+    function matchTrade(address[3][2] addresses, uint[4][2] values, bytes[2] signature) external {
+        OrderLibrary.Order memory left = OrderLibrary.createOrder(addresses[0], values[0]);
+        OrderLibrary.Order memory right = OrderLibrary.createOrder(addresses[1], values[1]);
+
+        require(left.maker != right.maker);
+        require(left.makerToken == right.takerToken);
+
+        bytes32 leftHash = left.hash();
+        bytes32 rightHash = right.hash();
+
+        require(canTrade(left, signature[0], leftHash));
+        require(canTrade(right, signature[1], rightHash));
+
+        // @todo events and that
+        performTrade(left, availableAmount(right, signature[1]), leftHash);
+        performTrade(right, availableAmount(left, signature[0]), rightHash);
+    }
+
     /// @dev Cancels an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
