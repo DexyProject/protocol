@@ -1,13 +1,13 @@
 pragma solidity ^0.4.21;
+pragma experimental ABIEncoderV2;
 
-import "./ExchangeInterface.sol";
 import "./Libraries/SafeMath.sol";
 import "./Libraries/SignatureValidator.sol";
 import "./Libraries/OrderLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
 
-contract Exchange is Ownable, ExchangeInterface {
+contract Exchange is Ownable {
 
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
@@ -73,11 +73,8 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
     /// @dev Cancels an order.
-    /// @param addresses Array of trade's maker, makerToken and takerToken.
-    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
-    function cancel(address[3] addresses, uint[4] values) external {
-        OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
-
+    /// @param order Order struct for the cancelling order.
+    function cancel(OrderLibrary.Order order) external {
         require(msg.sender == order.maker);
         require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0);
 

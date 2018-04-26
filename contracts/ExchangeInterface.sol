@@ -2,6 +2,7 @@ pragma solidity ^0.4.21;
 
 import "./Vault/VaultInterface.sol";
 
+// @todo update once we can have structs
 interface ExchangeInterface {
 
     event Cancelled(bytes32 indexed hash);
