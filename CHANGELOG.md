@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [unreleased]
  
 ### Changed
- - Minor cleanup to trade function
-
-### Changed
+ - Minor cleanup to trade function.
  - Deduplicated withdraw handling.
+ 
+### Added
+ - Traded Hook to subscribe to trade events.
 
 ### Fixed
  - Fixes ERC777 implementation

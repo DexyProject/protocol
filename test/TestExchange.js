@@ -1,6 +1,7 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
+const HookSubscriber = artifacts.require('./mocks/HookSubscriberMock.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
 const utils = require('./helpers/Utils.js');
 const web3Utils = require('web3-utils');
@@ -431,6 +432,44 @@ contract('Exchange', function (accounts) {
             await exchange.withdraw(0x0, amount, {from: accounts[0]});
             assert.equal((await web3.eth.getBalance(exchange.address)).toString(10), 0);
         });
+    });
+
+    it('should notify subscriber of trade', async () => {
+        let subscriber = await HookSubscriber.new();
+        let amount = 10;
+        let token = await MockToken.new();
+
+        await token.mint(subscriber.address, amount);
+
+        let order = {
+            takerToken: '0x0000000000000000000000000000000000000000',
+            takerTokenAmount: '10',
+            makerToken: token.address,
+            makerTokenAmount: amount,
+            expires: Math.floor((Date.now() / 1000) + 5000),
+            nonce: 10,
+            exchange: exchange.address
+        };
+
+        let data = {
+            addresses: [order.makerToken, order.takerToken],
+            values: [order.makerTokenAmount, order.takerTokenAmount, order.expires, order.nonce]
+        };
+
+        await subscriber.createOrder(data.addresses, data.values, exchange.address);
+
+        await vault.deposit(0x0, order.takerTokenAmount, {from: accounts[1], value: order.takerTokenAmount});
+        await vault.approve(exchange.address, {from: accounts[1]});
+
+        assert.equal(0, (await subscriber.tokens.call(order.takerToken)).toString(10));
+
+        await exchange.trade(
+            [subscriber.address, order.makerToken, order.takerToken],
+            data.values, '0x0', order.takerTokenAmount, {from: accounts[1]}
+        );
+
+        assert.equal(amount, (await subscriber.tokens.call(order.takerToken)).toString(10));
+
     });
 });
 

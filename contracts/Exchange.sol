@@ -6,6 +6,7 @@ import "./Libraries/SignatureValidator.sol";
 import "./Libraries/OrderLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
+import "./HookSubscriber.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
@@ -16,6 +17,8 @@ contract Exchange is Ownable, ExchangeInterface {
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
     uint256 constant private MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
+    
+    uint256 constant private MAX_HOOK_GAS = 40000; // enough for a storage write and some accounting logic
 
     VaultInterface public vault;
 
@@ -25,6 +28,7 @@ contract Exchange is Ownable, ExchangeInterface {
     mapping (address => mapping (bytes32 => bool)) private orders;
     mapping (bytes32 => uint) private fills;
     mapping (bytes32 => bool) private cancelled;
+    mapping (address => bool) private subscribed;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
@@ -43,6 +47,20 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         ERC20(token).transfer(msg.sender, amount);
+    }
+
+    /// @dev Subscribes user to trade hooks.
+    function subscribe() external {
+        require(!subscribed[msg.sender]);
+        subscribed[msg.sender] = true;
+        emit Subscribed(msg.sender);
+    }
+
+    /// @dev Unsubscribes user from trade hooks.
+    function unsubscribe() external {
+        require(subscribed[msg.sender]);
+        subscribed[msg.sender] = false;
+        emit Unsubscribed(msg.sender);
     }
 
     /// @dev Takes an order.
@@ -119,6 +137,13 @@ contract Exchange is Ownable, ExchangeInterface {
         return canTrade(order, signature, hash);
     }
 
+    /// @dev Returns if user has subscribed to trade hooks.
+    /// @param subscriber Address of the subscriber.
+    /// @return Boolean if user is subscribed.
+    function isSubscribed(address subscriber) external view returns (bool) {
+        return subscribed[subscriber];
+    }
+
     /// @dev Checks how much of an order can be filled.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
@@ -190,6 +215,10 @@ contract Exchange is Ownable, ExchangeInterface {
 
         fills[hash] = fills[hash].add(fillAmount);
         assert(fills[hash] <= order.takerTokenAmount);
+
+        if (subscribed[order.maker]) {
+            order.maker.call.gas(MAX_HOOK_GAS)(HookSubscriber(order.maker).tradeExecuted.selector, order.takerToken, fillAmount);
+        }
 
         emit Traded(
             hash,
