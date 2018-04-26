@@ -8,13 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [unreleased]
  
 ### Changed
- - Minor cleanup to trade function
-
+ - Minor cleanup to trade function.
+ - Deduplicated withdraw handling.
+ 
 ### Added
  - Traded Hook to subscribe to trade events.
 
-### Changed
- - Deduplicated withdraw handling.
 
 ## [2.0.0] - 2018-04-18
 
