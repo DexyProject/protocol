@@ -1,15 +1,25 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
+const EIP820Registry = require('eip820');
 const utils = require('./helpers/Utils.js');
+const Web3 = require('web3');
 
 contract('Vault', function (accounts) {
 
-    let vault, token;
+    let vault, token, erc820Registry;
+    let web3;
 
     beforeEach(async () => {
+        erc820Registry = await EIP820Registry.deploy(
+            new Web3(new Web3.providers.WebsocketProvider("ws://localhost:7545/")),
+            accounts[0]
+        );
+
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545/"));
+
         token = await MockToken.new();
-        vault = await Vault.new();
+        vault = await Vault.new(erc820Registry.$address);
     });
 
     describe('funds', async () => {
