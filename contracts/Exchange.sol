@@ -17,6 +17,8 @@ contract Exchange is Ownable, ExchangeInterface {
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
     uint256 constant private MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
+    
+    uint256 constant private MAX_HOOK_GAS = 40000; // enough for a storage write and some accounting logic
 
     VaultInterface public vault;
 
@@ -215,7 +217,7 @@ contract Exchange is Ownable, ExchangeInterface {
         assert(fills[hash] <= order.takerTokenAmount);
 
         if (subscribed[order.maker]) {
-            order.maker.call.gas(40000)(HookSubscriber(order.maker).tradeExecuted.selector, order.takerToken, fillAmount);
+            order.maker.call.gas(MAX_HOOK_GAS)(HookSubscriber(order.maker).tradeExecuted.selector, order.takerToken, fillAmount);
         }
 
         emit Traded(
