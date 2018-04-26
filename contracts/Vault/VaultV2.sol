@@ -10,7 +10,7 @@ contract VaultV2 {
     mapping (bytes4 => ConnectorInterface) public receivers;
     mapping (address => ConnectorInterface) public connectors;
 
-    function () payable {
+    function () public payable {
         // @todo move deposit into here potentially
 
         ConnectorInterface connector = receivers[msg.sig];
