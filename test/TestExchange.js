@@ -1,22 +1,33 @@
 const Vault = artifacts.require('vault/Vault.sol');
 const Exchange = artifacts.require('Exchange.sol');
 const MockToken = artifacts.require('./mocks/Token.sol');
+const HookSubscriber = artifacts.require('./mocks/HookSubscriberMock.sol');
 const SelfDestructor = artifacts.require('./mocks/SelfDestructor.sol');
 const utils = require('./helpers/Utils.js');
 const web3Utils = require('web3-utils');
 const ethutil = require('ethereumjs-util');
+const EIP820Registry = require('eip820');
+const Web3 = require('web3');
+let web3;
 
 const schema_hash = '0xb9caf644225739cd2bda9073346357ae4a0c3d71809876978bd81cc702b7fdc7';
 
 contract('Exchange', function (accounts) {
 
-    let vault, exchange;
+    let vault, exchange, erc820Registry;
     let feeAccount;
 
     beforeEach(async () => {
         feeAccount = accounts[4];
 
-        vault = await Vault.new();
+        erc820Registry = await EIP820Registry.deploy(
+            new Web3(new Web3.providers.WebsocketProvider("ws://localhost:7545/")),
+            accounts[0]
+        );
+
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545/"));
+
+        vault = await Vault.new(erc820Registry.$address);
         exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
         await vault.addSpender(exchange.address)
     });
@@ -89,7 +100,7 @@ contract('Exchange', function (accounts) {
                 exchange: exchange.address
             };
 
-            data = signOrder(order);
+            data = await signOrder(order);
         });
 
         it('should not allow maker to trade own order', async () => {
@@ -330,7 +341,7 @@ contract('Exchange', function (accounts) {
                 exchange: exchange.address
             };
 
-            data = signOrder(order);
+            data = await signOrder(order);
         });
 
         it('should return false when order is signed by different maker', async () => {
@@ -362,7 +373,7 @@ contract('Exchange', function (accounts) {
                 exchange: exchange.address
             };
 
-            data = signOrder(order);
+            data = await signOrder(order);
 
             await vault.deposit(0x0, order.takerTokenAmount, {from: accounts[0], value: order.makerTokenAmount});
             await vault.approve(exchange.address);
@@ -382,7 +393,7 @@ contract('Exchange', function (accounts) {
                 exchange: exchange.address
             };
 
-            data = signOrder(order);
+            data = await signOrder(order);
 
             await vault.deposit(0x0, order.makerTokenAmount, {from: accounts[0], value: order.makerTokenAmount});
             await vault.approve(exchange.address);
@@ -422,12 +433,50 @@ contract('Exchange', function (accounts) {
             assert.equal((await web3.eth.getBalance(exchange.address)).toString(10), 0);
         });
     });
+
+    it('should notify subscriber of trade', async () => {
+        let subscriber = await HookSubscriber.new();
+        let amount = 10;
+        let token = await MockToken.new();
+
+        await token.mint(subscriber.address, amount);
+
+        let order = {
+            takerToken: '0x0000000000000000000000000000000000000000',
+            takerTokenAmount: '10',
+            makerToken: token.address,
+            makerTokenAmount: amount,
+            expires: Math.floor((Date.now() / 1000) + 5000),
+            nonce: 10,
+            exchange: exchange.address
+        };
+
+        let data = {
+            addresses: [order.makerToken, order.takerToken],
+            values: [order.makerTokenAmount, order.takerTokenAmount, order.expires, order.nonce]
+        };
+
+        await subscriber.createOrder(data.addresses, data.values, exchange.address);
+
+        await vault.deposit(0x0, order.takerTokenAmount, {from: accounts[1], value: order.takerTokenAmount});
+        await vault.approve(exchange.address, {from: accounts[1]});
+
+        assert.equal(0, (await subscriber.tokens.call(order.takerToken)).toString(10));
+
+        await exchange.trade(
+            [subscriber.address, order.makerToken, order.takerToken],
+            data.values, '0x0', order.takerTokenAmount, {from: accounts[1]}
+        );
+
+        assert.equal(amount, (await subscriber.tokens.call(order.takerToken)).toString(10));
+
+    });
 });
 
-function signOrder(order) {
+async function signOrder(order) {
     let hashed = hashOrder(order);
 
-    let sig = web3.eth.sign(order.maker, hashed.hash).slice(2);
+    let sig = (await web3.eth.sign(hashed.hash, order.maker)).slice(2);
 
     let r = ethutil.toBuffer('0x' + sig.substring(0, 64));
     let s = ethutil.toBuffer('0x' + sig.substring(64, 128));
