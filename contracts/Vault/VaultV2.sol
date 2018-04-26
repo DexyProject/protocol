@@ -29,6 +29,15 @@ contract VaultV2 {
         }
     }
 
+    function addConnector(ConnectorInterface connector) external {
+        connector.delegatecall(connector.register.selector);
+
+        bytes4 receiver = connector.receiver();
+        if (receiver != 0x0) {
+            receivers[receiver] = connector;
+        }
+    }
+
     function deposit(address token, address user, uint amount) external payable {
         ConnectorInterface connector = connectors[token];
         connectors[token].delegatecall.value(msg.value)(
