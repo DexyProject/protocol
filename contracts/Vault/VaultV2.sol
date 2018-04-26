@@ -42,6 +42,7 @@ contract VaultV2 {
         ConnectorInterface connector = connectors[token];
         connectors[token].delegatecall.value(msg.value)(
             connector.deposit.selector,
+            token,
             user,
             amount
         );
