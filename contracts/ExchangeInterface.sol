@@ -5,6 +5,9 @@ import "./Vault/VaultInterface.sol";
 // @todo update once we can have structs
 interface ExchangeInterface {
 
+    event Subscribed(address indexed user);
+    event Unsubscribed(address indexed user);
+
     event Cancelled(bytes32 indexed hash);
 
     event Traded(
@@ -27,6 +30,9 @@ interface ExchangeInterface {
         uint nonce
     );
 
+    function subscribe() external;
+    function unsubscribe() external;
+
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external;
     function cancel(address[3] addresses, uint[4] values) external;
     function order(address[2] addresses, uint[4] values) external;
@@ -36,6 +42,7 @@ interface ExchangeInterface {
         view
         returns (bool);
 
+    function isSubscribed(address subscriber) external view returns (bool);
     function availableAmount(address[3] addresses, uint[4] values) external view returns (uint);
     function filled(bytes32 hash) external view returns (uint);
     function isOrdered(address user, bytes32 hash) public view returns (bool);
