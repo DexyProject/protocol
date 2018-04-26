@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+ 
+### Changed
+ - Minor cleanup to trade function
 
 ### Changed
  - Deduplicated withdraw handling.
