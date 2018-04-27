@@ -2,20 +2,20 @@ pragma solidity ^0.4.21;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/OrderLibrary.sol";
-import "./Libraries/TradeLibrary.sol";
+import "./Libraries/ExchangeLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
     using OrderLibrary for OrderLibrary.Order;
-    using TradeLibrary for TradeLibrary.Exchange;
+    using ExchangeLibrary for ExchangeLibrary.Exchange;
 
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
 
-    TradeLibrary.Exchange public exchange;
+    ExchangeLibrary.Exchange public exchange;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);

@@ -6,7 +6,7 @@ import "./SignatureValidator.sol";
 import "./../Vault/VaultInterface.sol";
 import "./../HookSubscriber.sol";
 
-library TradeLibrary {
+library ExchangeLibrary {
 
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
