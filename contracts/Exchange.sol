@@ -131,10 +131,7 @@ contract Exchange is Ownable, ExchangeInterface {
         returns (bool)
     {
         OrderLibrary.Order memory order = OrderLibrary.createOrder(addresses, values);
-
-        bytes32 hash = order.hash();
-
-        return canTrade(order, signature, hash);
+        return canTrade(order, signature, order.hash());
     }
 
     /// @dev Returns if user has subscribed to trade hooks.
@@ -203,8 +200,8 @@ contract Exchange is Ownable, ExchangeInterface {
         require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
         require(vault.balanceOf(order.takerToken, taker) >= fillAmount);
 
-        uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
-        uint tradeTakerFee = makeAmount.mul(takerFee).div(1 ether);
+        uint makeAmount = partialAmount(order.makerTokenAmount, order.takerTokenAmount, fillAmount);
+        uint tradeTakerFee = partialAmount(makeAmount, 1 ether, takerFee);
 
         if (tradeTakerFee > 0) {
             vault.transfer(order.makerToken, order.maker, feeAccount, tradeTakerFee);
@@ -280,7 +277,11 @@ contract Exchange is Ownable, ExchangeInterface {
     function availableAmount(OrderLibrary.Order memory order, bytes32 hash) internal view returns (uint) {
         return SafeMath.min256(
             order.takerTokenAmount.sub(fills[hash]),
-            vault.balanceOf(order.makerToken, order.maker).mul(order.takerTokenAmount).div(order.makerTokenAmount)
+            partialAmount(
+                vault.balanceOf(order.makerToken, order.maker),
+                order.makerTokenAmount,
+                order.takerTokenAmount
+            )
         );
     }
 
@@ -296,6 +297,10 @@ contract Exchange is Ownable, ExchangeInterface {
             return 0;
         }
 
-        return remainder.mul(1000000).div(numerator.mul(target));
+        return partialAmount(remainder, numerator.mul(target), 1000000);
+    }
+
+    function partialAmount(uint numerator, uint denominator, uint target) internal pure returns (uint) {
+        return numerator.mul(target).div(denominator);
     }
 }
