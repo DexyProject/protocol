@@ -63,6 +63,29 @@ contract Exchange is Ownable, ExchangeInterface {
         emit Unsubscribed(msg.sender);
     }
 
+
+    function multitrade(uint numOrders, address[] addresses, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint maxFillAmount) external {
+        require(addresses.length == 3*numOrders);
+        require(values.length == 4*numOrders);
+        require(sigmain.length == 2*numOrders);
+        require(sigaux.length == numOrders);
+
+        address[3] memory addrs;
+        uint[4] memory vals;
+        bytes memory s = new bytes(66);
+
+        for (uint i = 0; i < numOrders; i++){
+            for (uint j = 0; j < 3; j++){
+                addrs[j] = addresses[(i*3)+j];
+            }
+            for (j = 0; j < 4; j++){
+                vals[j] = values[(i*4)+j];
+            }
+            s = sigArrayToBytes(sigmain, sigaux, i);
+            trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount);
+        }
+    }
+
     /// @dev Takes an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
@@ -297,5 +320,17 @@ contract Exchange is Ownable, ExchangeInterface {
         }
 
         return remainder.mul(1000000).div(numerator.mul(target));
+    }
+
+    function sigArrayToBytes(bytes32[] sm, uint16[] sa, uint i) internal pure returns (bytes) {
+            bytes32 s1 = sm[i*2];
+            bytes32 s2 = sm[i*2 + 1];
+            uint16 s3 = sa[i];
+            bytes memory s = new bytes(66);
+            assembly {
+                mstore(add(s, 32), s1)
+                mstore(add(s, 64), s2)
+                mstore(add(s, 96), s3)
+            }
     }
 }
