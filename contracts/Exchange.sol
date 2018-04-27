@@ -1,13 +1,10 @@
 pragma solidity ^0.4.21;
 
 import "./ExchangeInterface.sol";
-import "./Libraries/SafeMath.sol";
-import "./Libraries/SignatureValidator.sol";
 import "./Libraries/OrderLibrary.sol";
 import "./Libraries/TradeLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
-import "./HookSubscriber.sol";
 
 contract Exchange is Ownable, ExchangeInterface {
 
