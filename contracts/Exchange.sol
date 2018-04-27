@@ -51,17 +51,16 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
 
-    function multitrade(uint numOrders, address[] addresses, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint maxFillAmount) external {
-        require(addresses.length == 3*numOrders);
-        require(values.length == 4*numOrders);
-        require(sigmain.length == 2*numOrders);
-        require(sigaux.length == numOrders);
+    function multitrade(address[] addresses, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint maxFillAmount) external {
+        require(addresses.length == 3*sigaux.length);
+        require(values.length == 4*sigaux.length);
+        require(sigmain.length == 2*sigaux.length);
 
         address[3] memory addrs;
         uint[4] memory vals;
-        bytes memory s = new bytes(66);
+        bytes memory s;
 
-        for (uint i = 0; i < numOrders; i++){
+        for (uint i = 0; i < sigaux.length; i++){
             for (uint j = 0; j < 3; j++){
                 addrs[j] = addresses[(i*3)+j];
             }
@@ -69,7 +68,7 @@ contract Exchange is Ownable, ExchangeInterface {
                 vals[j] = values[(i*4)+j];
             }
             s = sigArrayToBytes(sigmain, sigaux, i);
-            trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount);
+            exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount);
         }
     }
 
