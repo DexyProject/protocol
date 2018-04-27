@@ -224,11 +224,14 @@ contract Exchange is Ownable, ExchangeInterface {
             bytes32 s1 = sm[i*2];
             bytes32 s2 = sm[i*2 + 1];
             uint16 s3 = sa[i];
+            uint8 s4 = uint8(s3 % 256);
+            s3 = (s3 - uint16(s4)) / 256;
             bytes memory s = new bytes(66);
             assembly {
                 mstore(add(s, 32), s1)
                 mstore(add(s, 64), s2)
-                mstore(add(s, 96), s3)
+                mstore8(add(s, 96), s3)
+                mstore8(add(s, 97), s4)
             }
     }
 }
