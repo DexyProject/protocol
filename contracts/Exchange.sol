@@ -59,7 +59,7 @@ contract Exchange is Ownable, ExchangeInterface {
         address[3] memory addrs;
         uint[4] memory vals;
         bytes memory s;
-        uint filledSoFar;
+        uint filledSoFar = 0;
 
         for (uint i = 0; i < makers.length; i++){
             for (uint j = 0; j < 4; j++){
@@ -69,7 +69,7 @@ contract Exchange is Ownable, ExchangeInterface {
             addrs[1] = makerToken;
             addrs[2] = takerToken;
             s = sigArrayToBytes(sigmain, sigaux, i);
-            uint filled = exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount);
+            uint filled = exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount-filledSoFar);
             filledSoFar = filledSoFar + filled;
             if (filledSoFar >= maxFillAmount){
                 return;
