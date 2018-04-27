@@ -51,6 +51,33 @@ contract Exchange is Ownable, ExchangeInterface {
     }
 
 
+    function multifillUpTo(address makerToken, address takerToken, address[] makers, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint maxFillAmount) external {
+        require(makers.length == sigaux.length);
+        require(makers.length*2 == sigmain.length);
+        require(makers.length*4 == values.length);
+
+        address[3] memory addrs;
+        uint[4] memory vals;
+        bytes memory s;
+        uint filledSoFar;
+
+        for (uint i = 0; i < makers.length; i++){
+            for (uint j = 0; j < 4; j++){
+                vals[j] = values[i*4 + j];
+            }
+            addrs[0] = makers[i];
+            addrs[1] = makerToken;
+            addrs[2] = takerToken;
+            s = sigArrayToBytes(sigmain, sigaux, i);
+            uint filled = exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount);
+            filledSoFar = filledSoFar + filled;
+            if (filledSoFar >= maxFillAmount){
+                return;
+            }
+        }
+    }
+
+
     function multitrade(address[] addresses, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint[] maxFillAmount) external {
         require(addresses.length == 3*sigaux.length);
         require(values.length == 4*sigaux.length);
@@ -78,8 +105,8 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
-    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
-        exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
+    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external returns (uint) {
+        return exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
     }
 
     /// @dev Cancels an order.

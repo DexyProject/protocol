@@ -47,7 +47,7 @@ library ExchangeLibrary {
         bytes signature,
         uint maxFillAmount
     )
-        internal
+        internal returns (uint)
     {
         require(taker != order.maker);
         bytes32 hash = order.hash();
@@ -90,6 +90,8 @@ library ExchangeLibrary {
             order.maker,
             taker
         );
+
+        return fillAmount;
     }
 
     /// @dev Indicates whether or not an certain amount of an order can be traded.
