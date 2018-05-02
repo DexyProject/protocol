@@ -1,6 +1,7 @@
 pragma solidity ^0.4.21;
 
 import "./VaultInterface.sol";
+import "../Interfaces/ERC820.sol";
 import "../Libraries/SafeMath.sol";
 import "../Ownership/Ownable.sol";
 import "../Tokens/ERC20.sol";
@@ -30,6 +31,11 @@ contract Vault is Ownable, VaultInterface {
     modifier onlyApproved(address user) {
         require(approved[user][msg.sender]);
         _;
+    }
+
+    function Vault(ERC820 registry) public {
+        // required by ERC777 standard.
+        registry.setInterfaceImplementer(address(this), keccak256("ERC777TokensRecipient"), address(this));
     }
 
     /// @dev Deposits a specific token.
