@@ -67,6 +67,7 @@ contract Exchange is Ownable, ExchangeInterface {
 
         require(left.maker != right.maker);
         require(left.makerToken == right.takerToken);
+        require(left.takerToken == right.makerToken);
 
         bytes32 leftHash = left.hash();
         bytes32 rightHash = right.hash();
