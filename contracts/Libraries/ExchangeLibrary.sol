@@ -45,7 +45,8 @@ library ExchangeLibrary {
         OrderLibrary.Order memory order,
         address taker,
         bytes signature,
-        uint maxFillAmount
+        uint maxFillAmount,
+        bool chargeFees
     )
         internal
     {
@@ -63,7 +64,7 @@ library ExchangeLibrary {
         uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
         uint tradeTakerFee = makeAmount.mul(self.takerFee).div(1 ether);
 
-        if (tradeTakerFee > 0) {
+        if (tradeTakerFee > 0 && chargeFees) {
             self.vault.transfer(order.makerToken, order.maker, self.feeAccount, tradeTakerFee);
         }
 

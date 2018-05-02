@@ -1,5 +1,4 @@
 pragma solidity ^0.4.21;
-pragma experimental ABIEncoderV2;
 
 import "./ExchangeInterface.sol";
 import "./Libraries/OrderLibrary.sol";
@@ -57,24 +56,26 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
-        exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
+        exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount, true);
     }
 
-    function matchTrade(OrderLibrary.Order left, OrderLibrary.Order right, bytes leftSignature, bytes rightSignature)
+    function matchTrade(address[3][2] addresses, uint[4][2] values, bytes leftSignature, bytes rightSignature)
         external
     {
+        OrderLibrary.Order memory left = OrderLibrary.createOrder(addresses[0], values[0]);
+        OrderLibrary.Order memory right = OrderLibrary.createOrder(addresses[1], values[1]);
+
         require(left.maker != right.maker);
         require(left.makerToken == right.takerToken);
 
         bytes32 leftHash = left.hash();
         bytes32 rightHash = right.hash();
 
-        require(canTrade(left, leftSignature, leftHash));
-        require(canTrade(right, rightSignature, rightHash));
+        require(exchange.canTrade(left, leftSignature, leftHash));
+        require(exchange.canTrade(right, rightSignature, rightHash));
 
-        // @todo events and that
-        performTrade(left, availableAmount(right, rightHash), leftHash);
-        performTrade(right, availableAmount(left, leftHash), rightHash);
+        exchange.trade(left, right.maker, leftSignature, exchange.availableAmount(right, rightHash), true);
+        exchange.trade(right, left.maker, rightSignature, exchange.availableAmount(left, leftHash), false);
     }
 
     /// @dev Cancels an order.
