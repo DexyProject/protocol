@@ -18,7 +18,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DEXY/contracts.git"
+    "url": "git+https://github.com/DexyProject/contracts.git"
   },
   "devDependencies": {
     "solidity-coverage": "^0.3.5",
