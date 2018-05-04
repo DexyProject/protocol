@@ -1,5 +1,5 @@
 {
-  "name": "contracts",
+  "name": "@dexyproject/protocol",
   "version": "2.1.0",
   "description": "Decentralized exchange contracts for DEXY",
   "author": "DEXY",
@@ -37,6 +37,7 @@
     "testrpc": "0.0.1",
     "web3-utils": "^1.0.0-beta.34",
     "web3": "^1.0.0-beta.34",
-    "eip820": "^0.0.20"
+    "eip820": "^0.0.20",
+    "@dexyproject/signature-validator": "^1.0.0"
   }
 }
