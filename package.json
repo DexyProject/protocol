@@ -1,5 +1,5 @@
 {
-  "name": "contracts",
+  "name": "@dexyproject/protocol",
   "version": "2.1.0",
   "description": "Decentralized exchange contracts for DEXY",
   "author": "DEXY",
