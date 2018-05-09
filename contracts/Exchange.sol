@@ -3,38 +3,28 @@ pragma experimental ABIEncoderV2;
 
 import "./Libraries/SafeMath.sol";
 import "./Libraries/SignatureValidator.sol";
+import "./ExchangeInterface.sol";
 import "./Libraries/OrderLibrary.sol";
+import "./Libraries/ExchangeLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
-import "./HookSubscriber.sol";
 
 contract Exchange is Ownable {
 
-    using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
+    using ExchangeLibrary for ExchangeLibrary.Exchange;
 
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
-    uint256 constant private MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
-    
-    uint256 constant private MAX_HOOK_GAS = 40000; // enough for a storage write and some accounting logic
 
-    VaultInterface public vault;
-
-    uint public takerFee = 0;
-    address public feeAccount;
-
-    mapping (address => mapping (bytes32 => bool)) private orders;
-    mapping (bytes32 => uint) private fills;
-    mapping (bytes32 => bool) private cancelled;
-    mapping (address => bool) private subscribed;
+    ExchangeLibrary.Exchange public exchange;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
-        vault = _vault;
+        exchange.vault = _vault;
     }
 
     /// @dev Withdraws tokens accidentally sent to this contract.
@@ -51,15 +41,15 @@ contract Exchange is Ownable {
 
     /// @dev Subscribes user to trade hooks.
     function subscribe() external {
-        require(!subscribed[msg.sender]);
-        subscribed[msg.sender] = true;
+        require(!exchange.subscribed[msg.sender]);
+        exchange.subscribed[msg.sender] = true;
         emit Subscribed(msg.sender);
     }
 
     /// @dev Unsubscribes user from trade hooks.
     function unsubscribe() external {
-        require(subscribed[msg.sender]);
-        subscribed[msg.sender] = false;
+        require(exchange.subscribed[msg.sender]);
+        exchange.subscribed[msg.sender] = false;
         emit Unsubscribed(msg.sender);
     }
 
@@ -118,10 +108,10 @@ contract Exchange is Ownable {
         require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
-        require(fills[hash] < order.takerTokenAmount);
-        require(!cancelled[hash]);
+        require(exchange.fills[hash] < order.takerTokenAmount);
+        require(!exchange.cancelled[hash]);
 
-        cancelled[hash] = true;
+        exchange.cancelled[hash] = true;
         emit Cancelled(hash);
     }
 
@@ -130,16 +120,16 @@ contract Exchange is Ownable {
     function order(OrderLibrary.Order order) external {
         order.maker = msg.sender;
 
-        require(vault.isApproved(order.maker, this));
-        require(vault.balanceOf(order.makerToken, order.maker) >= order.makerTokenAmount);
+        require(exchange.vault.isApproved(order.maker, this));
+        require(exchange.vault.balanceOf(order.makerToken, order.maker) >= order.makerTokenAmount);
         require(order.makerToken != order.takerToken);
         require(order.makerTokenAmount > 0);
         require(order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
 
-        require(!orders[msg.sender][hash]);
-        orders[msg.sender][hash] = true;
+        require(!exchange.orders[msg.sender][hash]);
+        exchange.orders[msg.sender][hash] = true;
 
         emit Ordered(
             order.maker,
@@ -165,7 +155,7 @@ contract Exchange is Ownable {
     /// @param subscriber Address of the subscriber.
     /// @return Boolean if user is subscribed.
     function isSubscribed(address subscriber) external view returns (bool) {
-        return subscribed[subscriber];
+        return exchange.subscribed[subscriber];
     }
 
     /// @dev Checks how much of an order can be filled.
@@ -179,25 +169,25 @@ contract Exchange is Ownable {
     /// @param hash Hash of the order.
     /// @return Amount which was filled.
     function filled(bytes32 hash) external view returns (uint) {
-        return fills[hash];
+        return exchange.fills[hash];
     }
 
     /// @dev Sets the taker fee.
     /// @param _takerFee New taker fee.
     function setFees(uint _takerFee) public onlyOwner {
         require(_takerFee <= MAX_FEE);
-        takerFee = _takerFee;
+        exchange.takerFee = _takerFee;
     }
 
     /// @dev Sets the account where fees will be transferred to.
     /// @param _feeAccount Address for the account.
     function setFeeAccount(address _feeAccount) public onlyOwner {
         require(_feeAccount != 0x0);
-        feeAccount = _feeAccount;
+        exchange.feeAccount = _feeAccount;
     }
 
     function vault() public view returns (VaultInterface) {
-        return vault;
+        return exchange.vault;
     }
 
     /// @dev Checks if an order was created on chain.
