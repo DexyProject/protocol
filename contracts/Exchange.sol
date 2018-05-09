@@ -5,26 +5,32 @@ import "./Libraries/SafeMath.sol";
 import "./Libraries/SignatureValidator.sol";
 import "./ExchangeInterface.sol";
 import "./Libraries/OrderLibrary.sol";
-import "./Libraries/ExchangeLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
 
 contract Exchange is Ownable {
 
     using OrderLibrary for OrderLibrary.Order;
-    using ExchangeLibrary for ExchangeLibrary.Exchange;
+
+    VaultInterface vault;
+
+    uint takerFee;
+    address feeAccount;
+
+    mapping (address => mapping (bytes32 => bool)) orders;
+    mapping (bytes32 => uint) fills;
+    mapping (bytes32 => bool) cancelled;
+    mapping (address => bool) subscribed;
 
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
-
-    ExchangeLibrary.Exchange public exchange;
-
+    
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
         setFees(_takerFee);
         setFeeAccount(_feeAccount);
-        exchange.vault = _vault;
+        vault = _vault;
     }
 
     /// @dev Withdraws tokens accidentally sent to this contract.
@@ -41,15 +47,15 @@ contract Exchange is Ownable {
 
     /// @dev Subscribes user to trade hooks.
     function subscribe() external {
-        require(!exchange.subscribed[msg.sender]);
-        exchange.subscribed[msg.sender] = true;
+        require(!subscribed[msg.sender]);
+        subscribed[msg.sender] = true;
         emit Subscribed(msg.sender);
     }
 
     /// @dev Unsubscribes user from trade hooks.
     function unsubscribe() external {
-        require(exchange.subscribed[msg.sender]);
-        exchange.subscribed[msg.sender] = false;
+        require(subscribed[msg.sender]);
+        subscribed[msg.sender] = false;
         emit Unsubscribed(msg.sender);
     }
 
@@ -108,10 +114,10 @@ contract Exchange is Ownable {
         require(order.makerTokenAmount > 0 && order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
-        require(exchange.fills[hash] < order.takerTokenAmount);
-        require(!exchange.cancelled[hash]);
+        require(fills[hash] < order.takerTokenAmount);
+        require(!cancelled[hash]);
 
-        exchange.cancelled[hash] = true;
+        cancelled[hash] = true;
         emit Cancelled(hash);
     }
 
@@ -120,16 +126,16 @@ contract Exchange is Ownable {
     function order(OrderLibrary.Order order) external {
         order.maker = msg.sender;
 
-        require(exchange.vault.isApproved(order.maker, this));
-        require(exchange.vault.balanceOf(order.makerToken, order.maker) >= order.makerTokenAmount);
+        require(vault.isApproved(order.maker, this));
+        require(vault.balanceOf(order.makerToken, order.maker) >= order.makerTokenAmount);
         require(order.makerToken != order.takerToken);
         require(order.makerTokenAmount > 0);
         require(order.takerTokenAmount > 0);
 
         bytes32 hash = order.hash();
 
-        require(!exchange.orders[msg.sender][hash]);
-        exchange.orders[msg.sender][hash] = true;
+        require(!orders[msg.sender][hash]);
+        orders[msg.sender][hash] = true;
 
         emit Ordered(
             order.maker,
@@ -155,7 +161,7 @@ contract Exchange is Ownable {
     /// @param subscriber Address of the subscriber.
     /// @return Boolean if user is subscribed.
     function isSubscribed(address subscriber) external view returns (bool) {
-        return exchange.subscribed[subscriber];
+        return subscribed[subscriber];
     }
 
     /// @dev Checks how much of an order can be filled.
@@ -169,25 +175,25 @@ contract Exchange is Ownable {
     /// @param hash Hash of the order.
     /// @return Amount which was filled.
     function filled(bytes32 hash) external view returns (uint) {
-        return exchange.fills[hash];
+        return fills[hash];
     }
 
     /// @dev Sets the taker fee.
     /// @param _takerFee New taker fee.
     function setFees(uint _takerFee) public onlyOwner {
         require(_takerFee <= MAX_FEE);
-        exchange.takerFee = _takerFee;
+        takerFee = _takerFee;
     }
 
     /// @dev Sets the account where fees will be transferred to.
     /// @param _feeAccount Address for the account.
     function setFeeAccount(address _feeAccount) public onlyOwner {
         require(_feeAccount != 0x0);
-        exchange.feeAccount = _feeAccount;
+        feeAccount = _feeAccount;
     }
 
     function vault() public view returns (VaultInterface) {
-        return exchange.vault;
+        return vault;
     }
 
     /// @dev Checks if an order was created on chain.
@@ -257,7 +263,7 @@ contract Exchange is Ownable {
     /// @param target Value to multiply with.
     /// @return Percentage rounded.
     function roundingPercent(uint numerator, uint denominator, uint target) internal pure returns (uint) {
-        // Inspired by https://github.com/0xProject/contracts/blob/1.0.0/contracts/Exchange.sol#L472-L490
+        // Inspired by https://github.com/0xProject/contracts/blob/1.0.0/contracts/sol#L472-L490
         uint remainder = mulmod(target, numerator, denominator);
         if (remainder == 0) {
             return 0;
