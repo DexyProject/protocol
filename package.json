@@ -18,20 +18,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DEXY/contracts.git"
+    "url": "git+https://github.com/DexyProject/contracts.git"
   },
   "devDependencies": {
     "solidity-coverage": "^0.3.5",
     "solium": "^1.1.6",
-    "truffle": "^4.1.7"
-  },
-  "keywords": [
-    "solidity",
-    "ethereum",
-    "smart",
-    "contracts"
-  ],
-  "dependencies": {
+    "truffle": "^4.1.7",
     "ethereumjs-util": "^5.1.5",
     "ganache-cli": "^6.1.0",
     "testrpc": "0.0.1",
@@ -39,5 +31,11 @@
     "web3": "^1.0.0-beta.34",
     "eip820": "^0.0.20",
     "@dexyproject/signature-validator": "^1.0.0"
-  }
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts"
+  ]
 }
