@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
-import "./../../contracts/ExchangeInterface.sol";
+import "./../../contracts/Exchange.sol";
+import "./../../contracts/Libraries/OrderLibrary.sol";
 
 contract HookSubscriberMock {
 
@@ -10,10 +11,10 @@ contract HookSubscriberMock {
         tokens[token] += amount;
     }
 
-    function createOrder(address[2] addresses, uint[4] values, ExchangeInterface exchange) external {
+    function createOrder(address[2] addresses, uint[4] values, Exchange exchange) external {
         exchange.subscribe();
         exchange.vault().approve(exchange);
         exchange.vault().deposit(addresses[0], values[0]);
-        exchange.order(addresses, values);
+        exchange.order(OrderLibrary.createOrder([msg.sender, addresses[0], addresses[1]], values));
     }
 }

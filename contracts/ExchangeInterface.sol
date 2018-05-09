@@ -33,14 +33,14 @@ interface ExchangeInterface {
     function subscribe() external;
     function unsubscribe() external;
 
-    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external;
-    function cancel(address[3] addresses, uint[4] values) external;
-    function order(address[2] addresses, uint[4] values) external;
+//    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external;
+//    function cancel(address[3] addresses, uint[4] values) external;
+//    function order(address[2] addresses, uint[4] values) external;
 
-    function canTrade(address[3] addresses, uint[4] values, bytes signature)
-        external
-        view
-        returns (bool);
+//    function canTrade(address[3] addresses, uint[4] values, bytes signature)
+//        external
+//        view
+//        returns (bool);
 
     function isSubscribed(address subscriber) external view returns (bool);
     function availableAmount(address[3] addresses, uint[4] values) external view returns (uint);

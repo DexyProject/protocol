@@ -2,30 +2,35 @@ pragma solidity ^0.4.21;
 pragma experimental ABIEncoderV2;
 
 import "./Libraries/SafeMath.sol";
-import "./Libraries/SignatureValidator.sol";
 import "./ExchangeInterface.sol";
+import "./HookSubscriber.sol";
 import "./Libraries/OrderLibrary.sol";
 import "./Ownership/Ownable.sol";
 import "./Tokens/ERC20.sol";
 
-contract Exchange is Ownable {
+import "@DexyProject/signature-validator/contracts/SignatureValidator.sol";
 
+contract Exchange is ExchangeInterface, Ownable {
+
+    using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
 
-    VaultInterface vault;
+    VaultInterface public vault;
 
-    uint takerFee;
-    address feeAccount;
+    uint public takerFee;
+    address public feeAccount;
 
-    mapping (address => mapping (bytes32 => bool)) orders;
-    mapping (bytes32 => uint) fills;
-    mapping (bytes32 => bool) cancelled;
-    mapping (address => bool) subscribed;
+    mapping (address => mapping (bytes32 => bool)) public orders;
+    mapping (bytes32 => uint) public fills;
+    mapping (bytes32 => bool) public cancelled;
+    mapping (address => bool) public subscribed;
 
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
-    
+    uint256 constant public MAX_ROUNDING_PERCENTAGE = 1000; // 0.1%
+    uint256 constant public MAX_HOOK_GAS = 40000; // enough for a storage write and some accounting logic
+
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
         setFees(_takerFee);
