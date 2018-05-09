@@ -52,6 +52,21 @@ contract('Exchange', function (accounts) {
         let order, addresses, values;
 
         beforeEach(async () => {
+            // order = {
+            //     maker: accounts[0],
+            //     make: {
+            //         token: '0x0000000000000000000000000000000000000000',
+            //         amount: '100'
+            //     },
+            //     take: {
+            //         token: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+            //         amount: '10'
+            //     },
+            //     expires: Math.floor((Date.now() / 1000) + 5000),
+            //     nonce: 10,
+            //     exchange: exchange.address
+            // };
+
             order = {
                 takerToken: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
                 takerTokenAmount: '10',
