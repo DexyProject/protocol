@@ -33,16 +33,16 @@ solium --dir ./contracts
 ### Deployed Addresses
 
 #### Mainnet
- - Exchange: [0x1d150cfcd9bfa01e754e034442341ba85b85f1bb](https://etherscan.io/address/0x1d150cfcd9bfa01e754e034442341ba85b85f1bb)
- - Vault: [0x3956925d7d5199a6db1f42347fedbcd35312ae82](https://etherscan.io/address/0x3956925d7d5199a6db1f42347fedbcd35312ae82)
+ - Exchange: [0x9d160e257f1dff52ec81d5a4e7326dd82e144177](https://etherscan.io/address/0x9d160e257f1dff52ec81d5a4e7326dd82e144177)
+ - Vault: [0x54b0de285c15d27b0daa687bcbf40cea68b2807f](https://etherscan.io/address/0x54b0de285c15d27b0daa687bcbf40cea68b2807f)
 
 #### Ropsten
- - Exchange: [0xeea40bf84bd146ec53063b6aacfec250e23e200b](https://ropsten.etherscan.io/address/0xeea40bf84bd146ec53063b6aacfec250e23e200b)
- - Vault: [0xbac2d30ecf6e22080ad8d11c892456c569a2f4dd](https://ropsten.etherscan.io/address/0xbac2d30ecf6e22080ad8d11c892456c569a2f4dd)
+ - Exchange: [0xbdf08896a74a1d02b06a4e9bacc2f1cff1537f1d](https://ropsten.etherscan.io/address/0xbdf08896a74a1d02b06a4e9bacc2f1cff1537f1d)
+ - Vault: [0x301700d86fc22befdf71ed7bb87425bf4e9dea65](https://ropsten.etherscan.io/address/0x301700d86fc22befdf71ed7bb87425bf4e9dea65)
 
 #### Kovan
- - Exchange: [0x0fc2843d2bb414a896cbbba613c75e1d05e2eee4](https://kovan.etherscan.io/address/0x0fc2843d2bb414a896cbbba613c75e1d05e2eee4)
- - Vault: [0xf7d3db5afbee4e0a4f0935133fb71f57633f51a5](https://kovan.etherscan.io/address/0xf7d3db5afbee4e0a4f0935133fb71f57633f51a5)
+ - Exchange: [0xdc34b283d1fedd95fa6631ad2d0454cc088f8c93](https://kovan.etherscan.io/address/0xdc34b283d1fedd95fa6631ad2d0454cc088f8c93)
+ - Vault: [0x6bfb55b095d3b33dead74fa0a0cfe2aa5ef88d76](https://kovan.etherscan.io/address/0x6bfb55b095d3b33dead74fa0a0cfe2aa5ef88d76)
 
 ## Built With
 * [Truffle](https://github.com/trufflesuite/truffle) - Ethereum development environment 
