@@ -1,6 +1,6 @@
 # DEXY
 
-[![Build Status](https://travis-ci.com/DexyProject/contracts.svg?token=SGE7GHsjEHmsR4VosLJx&branch=development)](https://travis-ci.com/DexyProject/contracts) [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+[![Build Status](https://travis-ci.com/DexyProject/protocol.svg)](https://travis-ci.com/DexyProject/protocol) [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
 Smart Contracts for the DEXY exchange project.
 
