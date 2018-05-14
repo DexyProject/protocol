@@ -4,7 +4,7 @@
   "description": "Decentralized exchange contracts for DEXY",
   "author": "DEXY",
   "contributors": [
-    "Dean Eigenmann <dean@tokenate.io>"
+    "Dean Eigenmann <dean@dexy.exchange>"
   ],
   "license": "GPL-3.0",
   "scripts": {
