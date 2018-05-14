@@ -4,7 +4,8 @@
   "description": "Decentralized exchange contracts for DEXY",
   "author": "DEXY",
   "contributors": [
-    "Dean Eigenmann <dean@dexy.exchange>"
+    "Dean Eigenmann <dean@dexy.exchange>",
+    "Matthew Di Ferrante <matthew@dexy.exchange>"
   ],
   "license": "GPL-3.0",
   "scripts": {
