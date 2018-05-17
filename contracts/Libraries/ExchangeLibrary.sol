@@ -25,7 +25,7 @@ library ExchangeLibrary {
 
     struct Exchange {
         VaultInterface vault;
-        FeeInterface fees;
+        FeeInterface feeManager;
         address feeAccount;
         mapping (address => mapping (bytes32 => bool)) orders;
         mapping (bytes32 => uint) fills;
@@ -173,7 +173,7 @@ library ExchangeLibrary {
         view
         returns (uint)
     {
-        uint feeAmount = self.fees.fees(taker);
+        uint feeAmount = self.feeManager.fees(taker);
         if (feeAmount == 0) {
             return 0;
         }
