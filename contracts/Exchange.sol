@@ -13,8 +13,6 @@ contract Exchange is Ownable, ExchangeInterface {
 
     address constant public ETH = 0x0;
 
-    uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
-
     ExchangeLibrary.Exchange public exchange;
 
     function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
@@ -142,13 +140,6 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @return Amount which was filled.
     function filled(bytes32 hash) external view returns (uint) {
         return exchange.fills[hash];
-    }
-
-    /// @dev Sets the taker fee.
-    /// @param _takerFee New taker fee.
-    function setFees(uint _takerFee) public onlyOwner {
-        require(_takerFee <= MAX_FEE);
-        exchange.takerFee = _takerFee;
     }
 
     /// @dev Sets the account where fees will be transferred to.

@@ -5,11 +5,13 @@ import "./SafeMath.sol";
 import "@dexyproject/signature-validator/contracts/SignatureValidator.sol";
 import "./../Vault/VaultInterface.sol";
 import "./../HookSubscriber.sol";
+import "./../Fees/FeeInterface.sol";
 
 library ExchangeLibrary {
 
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
+    using ExchangeLibrary for ExchangeLibrary.Exchange;
 
     event Traded(
         bytes32 indexed hash,
@@ -23,7 +25,7 @@ library ExchangeLibrary {
 
     struct Exchange {
         VaultInterface vault;
-        uint takerFee;
+        FeeInterface fees;
         address feeAccount;
         mapping (address => mapping (bytes32 => bool)) orders;
         mapping (bytes32 => uint) fills;
@@ -61,7 +63,7 @@ library ExchangeLibrary {
         require(self.vault.balanceOf(order.takerToken, taker) >= fillAmount);
 
         uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
-        uint tradeTakerFee = makeAmount.mul(self.takerFee).div(1 ether);
+        uint tradeTakerFee = self.calculateFee(makeAmount, taker);
 
         if (tradeTakerFee > 0) {
             self.vault.transfer(order.makerToken, order.maker, self.feeAccount, tradeTakerFee);
@@ -164,5 +166,18 @@ library ExchangeLibrary {
         }
 
         return remainder.mul(1000000).div(numerator.mul(target));
+    }
+
+    function calculateFee(Exchange storage self, uint makeAmount, address taker)
+        internal
+        view
+        returns (uint)
+    {
+        uint feeAmount = self.fees.fees(taker);
+        if (feeAmount == 0) {
+            return 0;
+        }
+
+        return makeAmount.mul(feeAmount).div(1 ether);
     }
 }
