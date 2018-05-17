@@ -79,8 +79,15 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param nonce Random taker nonce.
-    /// @param taker Taker signature.
-    function tradeFor(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount, uint nonce, bytes takerSig)
+    /// @param takerSig Taker signature.
+    function tradeFor(
+        address[3] addresses,
+        uint[4] values,
+        bytes signature,
+        uint maxFillAmount,
+        uint nonce,
+        bytes takerSig
+    )
         external
     {
         address taker = SignatureValidator.recover(keccak256(maxFillAmount, nonce), takerSig);
