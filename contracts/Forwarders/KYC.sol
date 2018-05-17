@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import "./../Exchange.sol";
+import "./ForwarderInterface.sol";
 
 contract KYC is ForwarderInterface {
 
