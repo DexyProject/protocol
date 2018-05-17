@@ -13,6 +13,11 @@ contract Exchange is Ownable, ExchangeInterface {
     using SafeMath for *;
     using OrderLibrary for OrderLibrary.Order;
 
+    bytes32 constant public TAKER_HASH_SCHEME = keccak256(
+        "uint Maximum Fill Amount",
+        "uint Nonce"
+    );
+
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
@@ -90,7 +95,9 @@ contract Exchange is Ownable, ExchangeInterface {
     )
         external
     {
-        address taker = SignatureValidator.recover(keccak256(maxFillAmount, nonce), takerSig);
+        bytes32 hash = keccak256(TAKER_HASH_SCHEME, keccak256(maxFillAmount, nonce));
+        address taker = SignatureValidator.recover(hash, takerSig);
+
         trade(OrderLibrary.createOrder(addresses, values), taker, signature, maxFillAmount);
     }
 
