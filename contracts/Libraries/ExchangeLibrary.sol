@@ -62,8 +62,10 @@ library ExchangeLibrary {
         require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
         require(self.vault.balanceOf(order.takerToken, taker) >= fillAmount);
 
-        uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
-        uint tradeTakerFee = self.calculateFee(makeAmount, taker);
+        uint tradeTakerFee = self.calculateFee(
+            order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount),
+            taker
+        );
 
         if (tradeTakerFee > 0) {
             self.vault.transfer(order.makerToken, order.maker, self.feeAccount, tradeTakerFee);
@@ -168,16 +170,17 @@ library ExchangeLibrary {
         return remainder.mul(1000000).div(numerator.mul(target));
     }
 
-    function calculateFee(Exchange storage self, uint makeAmount, address taker)
-        internal
-        view
-        returns (uint)
-    {
+    /// @dev Returns the fee for a specific amount.
+    /// @param self Exchange storage.
+    /// @param takeAmount Amount of order to be taken.
+    /// @param taker Address of the taker.
+    /// @return Fee amount.
+    function calculateFee(Exchange storage self, uint takeAmount, address taker) internal view returns (uint) {
         uint feeAmount = self.feeManager.fees(taker);
         if (feeAmount == 0) {
             return 0;
         }
 
-        return makeAmount.mul(feeAmount).div(1 ether);
+        return takeAmount.mul(feeAmount).div(1 ether);
     }
 }
