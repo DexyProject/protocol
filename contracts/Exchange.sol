@@ -72,6 +72,21 @@ contract Exchange is Ownable, ExchangeInterface {
         trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
     }
 
+    // @todo new name
+    /// @dev Takes order on behalf of a user.
+    /// @param addresses Array of trade's maker, makerToken and takerToken.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
+    /// @param signature Signed order along with signature mode.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
+    /// @param nonce Random taker nonce.
+    /// @param taker Taker signature.
+    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount, uint nonce, bytes takerSig)
+        external
+    {
+        address taker = SignatureValidator.recover(keccak256(maxFillAmount, nonce), takerSig);
+        trade(OrderLibrary.createOrder(addresses, values), taker, signature, maxFillAmount);
+    }
+
     /// @dev Cancels an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.

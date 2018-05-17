@@ -14,6 +14,10 @@ library SignatureValidator {
     /// @param signature ECDSA signature along with the mode (0 = EIP712, 1 = Geth, 2 = Trezor) {mode}{v}{r}{s}.
     /// @return Returns whether signature is from a specified user.
     function isValidSignature(bytes32 hash, address signer, bytes signature) internal pure returns (bool) {
+        return recover(hash, signature) == signer;
+    }
+
+    function recover(bytes32 hash, bytes signature) internal pure returns (address) {
         require(signature.length == 66);
         SignatureMode mode = SignatureMode(uint8(signature[0]));
 
@@ -31,6 +35,6 @@ library SignatureValidator {
             hash = keccak256("\x19Ethereum Signed Message:\n\x20", hash);
         }
 
-        return ecrecover(hash, v, r, s) == signer;
+        return ecrecover(hash, v, r, s);
     }
 }
