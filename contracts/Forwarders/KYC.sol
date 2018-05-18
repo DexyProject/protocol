@@ -21,7 +21,7 @@ contract KYC is ForwarderInterface {
         exchange.tradeFor(addresses, values, sig, maxFillAmount, nonce, takerSig);
     }
 
-    function isPermitted(address user) external view returns (bool) {
+    function isPermitted(address user) public view returns (bool) {
         // @todo
         return false;
     }

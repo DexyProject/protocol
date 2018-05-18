@@ -11,6 +11,6 @@ interface ForwarderInterface {
         bytes takerSig
     ) external;
 
-    function isPermitted(address user) external view returns (bool);
+    function isPermitted(address user) public view returns (bool);
 
 }
