@@ -20,6 +20,4 @@ contract KYC is ForwarderInterface {
         // @todo checks
         exchange.tradeFor(addresses, values, sig, maxFillAmount, nonce, takerSig);
     }
-
-
 }
