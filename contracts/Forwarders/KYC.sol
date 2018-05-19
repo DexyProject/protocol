@@ -34,8 +34,9 @@ contract KYC is ForwarderInterface {
 
     function isPermitted(address user) public view returns (bool) {
         return addressGroup[user].kycGroupId;
-
-    function addGroup(kycId, allowedMarket, address[] users){
+    }
+    
+    function addGroup(kycId, allowedMarket, address[] users) {
         require(msg.sender == RingValidator);
 
         // user defined
