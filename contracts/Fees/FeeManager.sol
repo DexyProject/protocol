@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import "./FeeInterface.sol";
 import "./../Ownership/Ownable.sol";
 
-contract FeeManager is FeeInterface {
+contract FeeManager is Ownable, FeeInterface {
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
 
