@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
  - ```tradeFor``` function to allow forwarder contracts.
 
+### Changed
+ -  Using new [Signature Validator](https://github.com/DexyProject/SignatureValidator) package.
+
 ## [2.1.0] - 2018-04-26
  
 ### Changed
