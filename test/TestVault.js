@@ -100,14 +100,6 @@ contract('Vault', function (accounts) {
         });
     });
 
-    it('should allow setting and unsetting of ERC777 token', async () => {
-        await vault.setERC777(token.address, {from: accounts[0]});
-        assert.equal(await vault.isERC777(token.address), true);
-
-        await vault.unsetERC777(token.address, {from: accounts[0]});
-        assert.equal(await vault.isERC777(token.address), false);
-    });
-
     it('should allow a maker to approve and unapprove an exchange', async () => {
         await vault.addSpender(accounts[1]);
 
