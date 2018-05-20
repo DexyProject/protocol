@@ -88,7 +88,7 @@ contract Exchange is Ownable, ExchangeInterface {
             OrderLibrary.createOrder(addresses, values),
             SignatureValidator.recover(hash, takerSig),
             signature,
-            axFillAmount
+            maxFillAmount
         );
     }
 
