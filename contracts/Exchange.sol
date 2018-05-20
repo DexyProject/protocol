@@ -15,9 +15,8 @@ contract Exchange is Ownable, ExchangeInterface {
 
     ExchangeLibrary.Exchange public exchange;
 
-    function Exchange(uint _takerFee, address _feeAccount, VaultInterface _vault) public {
+    function Exchange(address _feeAccount, VaultInterface _vault) public {
         require(address(_vault) != 0x0);
-        setFees(_takerFee);
         setFeeAccount(_feeAccount);
         exchange.vault = _vault;
     }
