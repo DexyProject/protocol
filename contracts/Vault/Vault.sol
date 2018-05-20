@@ -13,8 +13,6 @@ contract Vault is Ownable, VaultInterface {
 
     address constant public ETH = 0x0;
 
-    mapping (address => bool) public isERC777;
-
     // user => spender => approved
     mapping (address => mapping (address => bool)) private approved;
     mapping (address => mapping (address => uint)) private balances;
@@ -135,23 +133,7 @@ contract Vault is Ownable, VaultInterface {
     }
 
     function tokensReceived(address, address from, address, uint amount, bytes, bytes) public {
-        if (!isERC777[msg.sender]) {
-            isERC777[msg.sender] = true;
-        }
-
         depositFor(from, msg.sender, amount);
-    }
-
-    /// @dev Marks a token as an ERC777 token.
-    /// @param token Address of the token.
-    function setERC777(address token) public onlyOwner {
-        isERC777[token] = true;
-    }
-
-    /// @dev Unmarks a token as an ERC777 token.
-    /// @param token Address of the token.
-    function unsetERC777(address token) public onlyOwner {
-        isERC777[token] = false;
     }
 
     /// @dev Allows owner to withdraw tokens accidentally sent to the contract.
@@ -196,11 +178,6 @@ contract Vault is Ownable, VaultInterface {
     function withdrawTo(address user, address token, uint amount) private {
         if (token == ETH) {
             user.transfer(amount);
-            return;
-        }
-
-        if (isERC777[token]) {
-            ERC777(token).send(user, amount);
             return;
         }
 
