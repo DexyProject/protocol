@@ -28,7 +28,7 @@ contract('Exchange', function (accounts) {
         web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:7545/"));
 
         vault = await Vault.new(erc820Registry.$address);
-        exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
+        exchange = await Exchange.new(feeAccount, vault.address);
         await vault.addSpender(exchange.address)
     });
 
