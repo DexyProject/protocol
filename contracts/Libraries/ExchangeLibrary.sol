@@ -62,10 +62,8 @@ library ExchangeLibrary {
         require(roundingPercent(fillAmount, order.takerTokenAmount, order.makerTokenAmount) <= MAX_ROUNDING_PERCENTAGE);
         require(self.vault.balanceOf(order.takerToken, taker) >= fillAmount);
 
-        uint tradeTakerFee = self.calculateFee(
-            order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount),
-            taker
-        );
+        uint makeAmount = order.makerTokenAmount.mul(fillAmount).div(order.takerTokenAmount);
+        uint tradeTakerFee = self.calculateFee(makeAmount, taker);
 
         if (tradeTakerFee > 0) {
             self.vault.transfer(order.makerToken, order.maker, self.feeAccount, tradeTakerFee);
