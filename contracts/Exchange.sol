@@ -11,6 +11,11 @@ contract Exchange is Ownable, ExchangeInterface {
     using OrderLibrary for OrderLibrary.Order;
     using ExchangeLibrary for ExchangeLibrary.Exchange;
 
+    bytes32 constant public TAKER_HASH_SCHEME = keccak256(
+        "uint Maximum Fill Amount",
+        "uint Nonce"
+    );
+
     address constant public ETH = 0x0;
 
     uint256 constant public MAX_FEE = 5000000000000000; // 0.5% ((0.5 / 100) * 10**18)
@@ -57,6 +62,34 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @param maxFillAmount Maximum amount of the order to be filled.
     function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
         exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
+    }
+
+    // @todo new name
+    /// @dev Takes order on behalf of a user.
+    /// @param addresses Array of trade's maker, makerToken and takerToken.
+    /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
+    /// @param signature Signed order along with signature mode.
+    /// @param maxFillAmount Maximum amount of the order to be filled.
+    /// @param nonce Random taker nonce.
+    /// @param takerSig Taker signature.
+    function tradeFor(
+        address[3] addresses,
+        uint[4] values,
+        bytes signature,
+        uint maxFillAmount,
+        uint nonce,
+        bytes takerSig
+    )
+        external
+    {
+        bytes32 hash = keccak256(TAKER_HASH_SCHEME, keccak256(maxFillAmount, nonce));
+
+        exchange.trade(
+            OrderLibrary.createOrder(addresses, values),
+            SignatureValidator.recover(hash, takerSig),
+            signature,
+            maxFillAmount
+        );
     }
 
     /// @dev Cancels an order.
