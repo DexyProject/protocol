@@ -5,7 +5,7 @@ interface ForwarderInterface {
     /// @dev Takes order on behalf of a user.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
-    /// @param signature Signed order along with signature mode.
+    /// @param sig Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
     /// @param nonce Random taker nonce.
     /// @param takerSig Taker signature, taker address MUST be derived from this signature.
