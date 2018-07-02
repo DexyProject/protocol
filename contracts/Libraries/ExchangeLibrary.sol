@@ -2,9 +2,9 @@ pragma solidity ^0.4.23;
 
 import "./OrderLibrary.sol";
 import "./SafeMath.sol";
-import "@dexyproject/signature-validator/contracts/SignatureValidator.sol";
 import "./../Vault/VaultInterface.sol";
 import "./../HookSubscriber.sol";
+import "@dexyproject/signature-validator/contracts/SignatureValidator.sol";
 
 library ExchangeLibrary {
 
