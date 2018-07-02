@@ -4,7 +4,8 @@
   "description": "Decentralized exchange contracts for DEXY",
   "author": "DEXY",
   "contributors": [
-    "Dean Eigenmann <dean@tokenate.io>"
+    "Dean Eigenmann <dean@dexy.exchange>",
+    "Matthew Di Ferrante <matthew@dexy.exchange>"
   ],
   "license": "GPL-3.0",
   "scripts": {
@@ -18,7 +19,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DexyProject/contracts.git"
+    "url": "git+https://github.com/DexyProject/protocol.git"
   },
   "devDependencies": {
     "solidity-coverage": "^0.3.5",
