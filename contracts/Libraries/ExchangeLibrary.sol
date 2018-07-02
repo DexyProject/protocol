@@ -4,7 +4,7 @@ import "./OrderLibrary.sol";
 import "./SafeMath.sol";
 import "./../Vault/VaultInterface.sol";
 import "./../HookSubscriber.sol";
-import "@DexyProject/signature-validator/contracts/SignatureValidator.sol";
+import "@dexyproject/signature-validator/contracts/SignatureValidator.sol";
 
 library ExchangeLibrary {
 
