@@ -10,12 +10,15 @@ const EIP820Registry = require('eip820');
 const Web3 = require('web3');
 let web3;
 
+const DEXY = require('../../dexy.js/src/index');
+
 const schema_hash = '0xb9caf644225739cd2bda9073346357ae4a0c3d71809876978bd81cc702b7fdc7';
 
 contract('Exchange', function (accounts) {
 
     let vault, exchange, erc820Registry;
     let feeAccount;
+    let dexy;
 
     beforeEach(async () => {
         feeAccount = accounts[4];
@@ -30,6 +33,8 @@ contract('Exchange', function (accounts) {
         vault = await Vault.new(erc820Registry.$address);
         exchange = await Exchange.new(2500000000000000, feeAccount, vault.address);
         await vault.addSpender(exchange.address)
+
+        dexy = new DEXY.Dexy(exchange.address, vault.address, web3);
     });
 
     it('should revert when depositing ether', async () => {
@@ -47,6 +52,21 @@ contract('Exchange', function (accounts) {
         let order, addresses, values;
 
         beforeEach(async () => {
+            // order = {
+            //     maker: accounts[0],
+            //     make: {
+            //         token: '0x0000000000000000000000000000000000000000',
+            //         amount: '100'
+            //     },
+            //     take: {
+            //         token: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
+            //         amount: '10'
+            //     },
+            //     expires: Math.floor((Date.now() / 1000) + 5000),
+            //     nonce: 10,
+            //     exchange: exchange.address
+            // };
+
             order = {
                 takerToken: '0xc5427f201fcbc3f7ee175c22e0096078c6f584c4',
                 takerTokenAmount: '10',
