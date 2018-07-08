@@ -50,13 +50,63 @@ contract Exchange is Ownable, ExchangeInterface {
         emit Unsubscribed(msg.sender);
     }
 
+
+    function multifillUpTo(address makerToken, address takerToken, address[] makers, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint maxFillAmount) external {
+        require(makers.length == sigaux.length);
+        require(makers.length*2 == sigmain.length);
+        require(makers.length*4 == values.length);
+
+        address[3] memory addrs;
+        uint[4] memory vals;
+        bytes memory s;
+        uint filledSoFar = 0;
+
+        for (uint i = 0; i < makers.length; i++){
+            for (uint j = 0; j < 4; j++){
+                vals[j] = values[i*4 + j];
+            }
+            addrs[0] = makers[i];
+            addrs[1] = makerToken;
+            addrs[2] = takerToken;
+            s = sigArrayToBytes(sigmain, sigaux, i);
+            uint filled = exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount-filledSoFar);
+            filledSoFar = filledSoFar + filled;
+            if (filledSoFar >= maxFillAmount){
+                return;
+            }
+        }
+    }
+
+
+    function multitrade(address[] addresses, uint[] values, bytes32[] sigmain, uint16[] sigaux, uint[] maxFillAmount) external {
+        require(addresses.length == 3*sigaux.length);
+        require(values.length == 4*sigaux.length);
+        require(sigmain.length == 2*sigaux.length);
+        require(maxFillAmount.length == sigaux.length);
+
+        address[3] memory addrs;
+        uint[4] memory vals;
+        bytes memory s;
+
+        for (uint i = 0; i < sigaux.length; i++){
+            for (uint j = 0; j < 3; j++){
+                addrs[j] = addresses[(i*3)+j];
+            }
+            for (j = 0; j < 4; j++){
+                vals[j] = values[(i*4)+j];
+            }
+            s = sigArrayToBytes(sigmain, sigaux, i);
+            exchange.trade(OrderLibrary.createOrder(addrs, vals), msg.sender, s, maxFillAmount[i]);
+        }
+    }
+
     /// @dev Takes an order.
     /// @param addresses Array of trade's maker, makerToken and takerToken.
     /// @param values Array of trade's makerTokenAmount, takerTokenAmount, expires and nonce.
     /// @param signature Signed order along with signature mode.
     /// @param maxFillAmount Maximum amount of the order to be filled.
-    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external {
-        exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
+    function trade(address[3] addresses, uint[4] values, bytes signature, uint maxFillAmount) external returns (uint) {
+        return exchange.trade(OrderLibrary.createOrder(addresses, values), msg.sender, signature, maxFillAmount);
     }
 
     /// @dev Cancels an order.
@@ -168,5 +218,20 @@ contract Exchange is Ownable, ExchangeInterface {
     /// @return Boolean if the order was created on chain.
     function isOrdered(address user, bytes32 hash) public view returns (bool) {
         return exchange.orders[user][hash];
+    }
+
+    function sigArrayToBytes(bytes32[] sm, uint16[] sa, uint i) internal pure returns (bytes) {
+            bytes32 s1 = sm[i*2];
+            bytes32 s2 = sm[i*2 + 1];
+            uint16 s3 = sa[i];
+            uint8 s4 = uint8(s3 % 256);
+            s3 = (s3 - uint16(s4)) / 256;
+            bytes memory s = new bytes(66);
+            assembly {
+                mstore(add(s, 32), s1)
+                mstore(add(s, 64), s2)
+                mstore8(add(s, 96), s3)
+                mstore8(add(s, 97), s4)
+            }
     }
 }
